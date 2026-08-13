@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "Stack",
+    "slug": "stack",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "stack",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.stack.app"
+    },
+    "android": {
+      "package": "com.stack.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#7C5CFC"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "0e82186d-8b4c-49b0-8eae-f5e54da1f073"
+      }
+    },
+    "owner": "amens-team"
+  }
+}
