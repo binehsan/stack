@@ -133,6 +133,17 @@ class SendGroupInviteView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # This was the one push notification the app never actually sent —
+        # NudgeGroupTaskView has always pushed on assignment, but an invite
+        # sat silently in `/api/groups/invites/` until the invitee happened
+        # to open the app and check.
+        send_expo_push(
+            invited_user.push_tokens.values_list('token', flat=True),
+            title=f'@{request.user.profile.username} invited you',
+            body=f'Join "{membership.stack.name}" on Stack',
+            data={'stackId': membership.stack.id, 'inviteId': invite.id},
+        )
+
         return Response(GroupInviteSerializer(invite).data, status=status.HTTP_201_CREATED)
 
 
