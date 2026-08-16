@@ -115,6 +115,82 @@ requires the caller to be a member of that stack.
 
 Each member in `members`/`created_by`/`assigned_to` is `{id, email, username, avatar}`.
 
+### Billing / Stack Pro (`billing` app)
+
+Server-authoritative subscription entitlement, backed by RevenueCat webhooks
+— the frontend never gets to declare itself "Pro" on its own; every gated
+endpoint (below and in `accounts`/`family`) checks `Entitlement.is_pro`
+computed here. `GET /api/billing/entitlement/` requires
+`Authorization: Bearer <access>` like every other authenticated endpoint;
+the webhook is the one exception (see its row).
+
+| Method | Endpoint                              | Purpose |
+|--------|-----------------------------------------|---------|
+| GET    | `/api/billing/entitlement/`             | The caller's current Pro status + usage counters (see shape below), auth required. Meant to be polled/refreshed by the frontend after any purchase, restore, or app foreground. |
+| POST   | `/api/billing/revenuecat-webhook/`      | RevenueCat subscription lifecycle events. **Not JWT-authenticated** — validated instead via a shared secret in `Authorization: Bearer <REVENUECAT_WEBHOOK_SECRET>`. Always 200 once authenticated and parseable (including no-op/unknown event types), so RevenueCat doesn't retry-storm us; 401 on a missing/wrong secret, 400 if the body doesn't parse. |
+| POST   | `/api/billing/voice-capture/`           | Reserves one voice-input use against the caller's monthly Pro quota. Auth required. `402 {"code": "PAYWALL_VOICE"}` if the caller isn't Pro; `429 {"code": "VOICE_QUOTA_EXCEEDED", "reset_at": ...}` if they've used all `PRO_VOICE_MONTHLY_LIMIT` (200) captures this calendar month; otherwise creates a `VoiceCapture` row and returns `204`. **This is a quota-reservation stub only** — there's no actual speech-to-text behind it anywhere in this codebase; it exists so the frontend can wire a real mic feature to it later without a backend change. |
+
+`GET /api/billing/entitlement/` response shape:
+
+```json
+{
+  "is_pro": true,
+  "status": "active",
+  "expires_at": "2026-09-14T00:00:00Z",
+  "is_lifetime": false,
+  "groups_founded": 1,
+  "groups_founded_limit": null,
+  "devices": 1,
+  "devices_limit": null,
+  "voice_captures_used": 12,
+  "voice_captures_limit": 200,
+  "voice_reset_at": "2026-09-01T00:00:00Z"
+}
+```
+
+`*_limit` fields are `null` when the caller is Pro (unlimited), else the
+free-tier constant (`FREE_GROUP_FOUND_LIMIT = 1`, `FREE_DEVICE_LIMIT = 1`,
+`PRO_VOICE_MONTHLY_LIMIT = 200` — all in `billing/models.py`).
+`voice_reset_at` is always the first of next month in `TIME_ZONE`; voice
+quota is counted from `VoiceCapture` rows created in the current calendar
+month rather than a separate counter, so there's no reset-race to get wrong.
+
+**The `Entitlement` model** (`billing/models.py`) is the single
+source of truth for a user's Pro status — `status` (`free`/`active`/
+`trialing`/`cancelled`/`expired`), `expires_at`, and `is_lifetime` (the
+one-time non-consumable "lifetime unlock", always Pro regardless of
+`status`/`expires_at`). It's created lazily via `get_or_create_entitlement()`
+on first read or write, not backfilled by migration. Only the RevenueCat
+webhook (or an admin editing it by hand, e.g. to grant a lifetime unlock
+manually) ever changes it — nothing else in the codebase should write to it.
+
+**`REVENUECAT_WEBHOOK_SECRET`** (env var, read in `config/settings.py`)
+must be set before the webhook will accept anything — an unset/empty value
+makes it reject-closed (401 on every request) rather than silently trusting
+unauthenticated callers. Get the value from the RevenueCat dashboard
+(Project settings → Webhooks → set an "Authorization header value" there,
+then use that same string here) and configure the webhook URL there as
+`https://<your-host>/api/billing/revenuecat-webhook/`.
+
+**Two other endpoints gate on entitlement without living in `billing`'s own
+URLs**, since they're extending existing flows: `POST /api/groups/create/`
+(`family` app) 402s with `{"code": "PAYWALL_GROUP_LIMIT"}` on a free user's
+2nd group; `POST /api/auth/login/` and `POST /api/auth/register/`
+(`accounts` app) both accept an optional `device_id` field and 402 with
+`{"code": "PAYWALL_DEVICE_LIMIT"}` if a free user's device isn't already
+known and they're at `FREE_DEVICE_LIMIT`. Both fail the request outright
+(no tokens issued, no `Device` row created) rather than succeeding and
+capping later. `device_id` is optional and backward compatible — omitting
+it (older/unmodified clients) skips all device logic.
+
+**The 20-member group cap** (`GROUP_MEMBER_ABUSE_CAP` in
+`billing/models.py`, enforced in `family/views.py`'s
+`RespondGroupInviteView`) is **not** a paywall — it applies to every group
+regardless of the founder's or joiner's tier, and returns
+`400 {"code": "GROUP_MEMBER_CAP"}` with plain "this group is full" wording,
+purely to stop the free "found 1 group" tier being abused as an unlimited
+public broadcast list.
+
 ## Admin
 
 A superuser lets you inspect tasks and users directly at `/admin/`:

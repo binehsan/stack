@@ -1,0 +1,157 @@
+.wrapper {
+  list-style: none;
+  margin-bottom: var(--space-sm);
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: var(--color-card);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+}
+
+.checkRow {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.checkbox {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkboxCompleted {
+  background: var(--color-accent);
+}
+
+.checkIcon {
+  display: flex;
+  color: var(--color-on-accent);
+}
+
+.textWrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.text {
+  display: block;
+  font-size: 16px;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.textCompleted {
+  color: var(--color-text-muted);
+}
+
+.strikeClip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+  display: block;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.strikeText {
+  display: block;
+  font-size: 16px;
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.starButton {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: var(--space-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.starDisabled {
+  opacity: 0.25;
+}
+
+.starFilled {
+  color: var(--color-accent);
+}
+
+.starOutline {
+  color: var(--color-text-muted);
+  opacity: 0.6;
+}
+
+.deleteButton {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: var(--space-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  opacity: 0.55;
+  border-radius: var(--radius-sm);
+  transition: opacity 150ms ease, color 150ms ease;
+}
+
+.deleteButton:hover,
+.deleteButton:focus-visible {
+  opacity: 1;
+  color: var(--color-danger);
+}
+
+/* Touch devices have no hover state to reveal the button on — keep it
+   clearly visible (not full-strength) at rest instead of relying on a
+   gesture that doesn't exist here. */
+@media (hover: none) {
+  .deleteButton {
+    opacity: 0.7;
+  }
+}
+
+@media (max-width: 420px) {
+  .card {
+    padding: var(--space-sm) var(--space-md);
+    gap: var(--space-xs);
+  }
+
+  .checkRow {
+    gap: var(--space-sm);
+  }
+
+  .starButton,
+  .deleteButton {
+    padding: var(--space-xs);
+  }
+}

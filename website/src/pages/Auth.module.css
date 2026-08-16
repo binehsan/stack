@@ -1,0 +1,83 @@
+/* Shared shell for Login and Signup — both pages render this same
+   structure (centered brand mark + card) so they read as one family. */
+
+.wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl) var(--space-md);
+}
+
+.inner {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.brandMark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: var(--space-xl);
+}
+
+.wordmark {
+  color: var(--color-text);
+  margin-top: var(--space-sm);
+}
+
+.tagline {
+  color: var(--color-text-muted);
+  font-weight: 400;
+  margin-top: var(--space-xs);
+}
+
+.card {
+  width: 100%;
+  padding: var(--space-lg);
+}
+
+.title {
+  color: var(--color-text);
+  margin-bottom: var(--space-md);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+.switchRow {
+  margin-top: var(--space-lg);
+  display: flex;
+  justify-content: center;
+}
+
+.pill {
+  background: var(--color-card);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-pill);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.switchText {
+  color: var(--color-text-muted);
+}
+
+.switchLink {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+@media (max-width: 480px) {
+  .wrap {
+    padding: var(--space-lg) var(--space-sm);
+  }
+
+  .card {
+    padding: var(--space-md);
+  }
+}

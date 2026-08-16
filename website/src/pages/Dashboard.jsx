@@ -1,0 +1,222 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import { CheckCircle2, ClipboardList, RefreshCw, Sun } from 'lucide-react';
+
+import IconButton from '../components/IconButton';
+import TaskInput from '../components/dashboard/TaskInput';
+import FocusSection from '../components/dashboard/FocusSection';
+import TaskList from '../components/dashboard/TaskList';
+import DumpSection from '../components/dashboard/DumpSection';
+import { createTask, deleteTask, fetchTasks, updateTask } from '../api/tasks';
+import styles from './Dashboard.module.css';
+
+const MAX_FOCUS_STARS = 3;
+// How long a freshly-completed task lingers in the active list (showing its
+// strike-through) before sliding into the Dump. Matches TaskItem's 320ms
+// strike-through duration, same as the mobile app's HomeScreen.js.
+const DUMP_DELAY_MS = 320;
+
+// The core "My Stack" experience: fetch tasks on mount, then everything is
+// optimistic local state synced to the backend in the background, with
+// rollback on failure — same data flow as frontend/src/screens/HomeScreen.js.
+//
+// Scope cut: drag-to-reorder is intentionally not implemented here. It's a
+// touch/native-flatlist interaction with no clean web equivalent in scope
+// for this MVP, and `reorderTasks` is unused as a result.
+export default function Dashboard() {
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [justCompletedIds, setJustCompletedIds] = useState(() => new Set());
+  const dumpTimers = useRef({});
+
+  useEffect(() => {
+    fetchTasks()
+      .then(setTasks)
+      .catch((err) => console.warn('Failed to load tasks:', err.message))
+      .finally(() => setLoading(false));
+
+    const timers = dumpTimers.current;
+    return () => {
+      Object.values(timers).forEach(clearTimeout);
+    };
+  }, []);
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    try {
+      setTasks(await fetchTasks());
+    } catch (err) {
+      console.warn('Failed to refresh:', err.message);
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  // Optimistic UI throughout: every action updates local state immediately,
+  // then syncs to the backend in the background, rolling back on failure.
+
+  async function handleAdd(text) {
+    const tempId = `temp-${Date.now()}`;
+    const optimisticTask = {
+      id: tempId,
+      // Stays constant across the optimistic->real swap below, unlike `id`.
+      // TaskList/DumpSection key rows on this so a row keeps its identity
+      // (and doesn't replay its entrance animation) once the server responds.
+      localId: tempId,
+      text,
+      completed: false,
+      starred: false,
+      created_at: new Date().toISOString(),
+    };
+    setTasks((prev) => [optimisticTask, ...prev]);
+
+    try {
+      const saved = await createTask(text);
+      setTasks((prev) => prev.map((t) => (t.id === tempId ? { ...saved, localId: tempId } : t)));
+    } catch (err) {
+      console.warn('Failed to add task:', err.message);
+      setTasks((prev) => prev.filter((t) => t.id !== tempId));
+    }
+  }
+
+  function clearDumpTimer(id) {
+    if (dumpTimers.current[id]) {
+      clearTimeout(dumpTimers.current[id]);
+      delete dumpTimers.current[id];
+    }
+  }
+
+  async function handleToggle(task) {
+    const nextCompleted = !task.completed;
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: nextCompleted } : t)));
+
+    clearDumpTimer(task.id);
+    if (nextCompleted) {
+      // Stay visible in the active list just long enough to show the
+      // strike-through animation, then drop into the Dump.
+      setJustCompletedIds((prev) => new Set(prev).add(task.id));
+      dumpTimers.current[task.id] = setTimeout(() => {
+        setJustCompletedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(task.id);
+          return next;
+        });
+        delete dumpTimers.current[task.id];
+      }, DUMP_DELAY_MS);
+    } else {
+      // Un-completing from the Dump — reappear in the active list immediately.
+      setJustCompletedIds((prev) => {
+        if (!prev.has(task.id)) return prev;
+        const next = new Set(prev);
+        next.delete(task.id);
+        return next;
+      });
+    }
+
+    try {
+      await updateTask(task.id, { completed: nextCompleted });
+    } catch (err) {
+      console.warn('Failed to update task:', err.message);
+      clearDumpTimer(task.id);
+      setJustCompletedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(task.id);
+        return next;
+      });
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: task.completed } : t)));
+    }
+  }
+
+  async function handleToggleStar(task) {
+    const nextStarred = !task.starred;
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, starred: nextStarred } : t)));
+
+    try {
+      await updateTask(task.id, { starred: nextStarred });
+    } catch (err) {
+      console.warn('Failed to update focus star:', err.message);
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, starred: task.starred } : t)));
+    }
+  }
+
+  async function handleDelete(id) {
+    const previousTasks = tasks;
+    clearDumpTimer(id);
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+
+    try {
+      await deleteTask(id);
+    } catch (err) {
+      console.warn('Failed to delete task:', err.message);
+      setTasks(previousTasks);
+    }
+  }
+
+  const starredCount = useMemo(() => tasks.filter((t) => t.starred).length, [tasks]);
+  const activeTasks = useMemo(
+    () => tasks.filter((t) => !t.completed || justCompletedIds.has(t.id)),
+    [tasks, justCompletedIds]
+  );
+  const doneTasks = useMemo(
+    () => tasks.filter((t) => t.completed && !justCompletedIds.has(t.id)),
+    [tasks, justCompletedIds]
+  );
+  const starProps = { onToggleStar: handleToggleStar, starDisabled: starredCount >= MAX_FOCUS_STARS };
+  const hasNoTasksAtAll = !loading && tasks.length === 0;
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.headerRow}>
+        <h1 className="text-header">My Stack</h1>
+        <IconButton label="Refresh tasks" onClick={handleRefresh} disabled={refreshing} size={36}>
+          <motion.span
+            animate={{ rotate: refreshing ? 360 : 0 }}
+            transition={
+              refreshing
+                ? { duration: 0.7, repeat: Infinity, ease: 'linear' }
+                : { duration: 0 }
+            }
+            className={styles.refreshIcon}
+          >
+            <RefreshCw size={16} />
+          </motion.span>
+        </IconButton>
+      </div>
+
+      <TaskInput onSubmit={handleAdd} />
+
+      {loading && <p className={`text-small text-muted ${styles.loadingState}`}>Loading your stack…</p>}
+
+      {!loading && (
+        <div className={styles.listArea}>
+          {hasNoTasksAtAll ? (
+            <div className={styles.emptyState}>
+              <ClipboardList size={40} strokeWidth={1.5} className={styles.emptyIcon} />
+              <p className="text-body-strong">Nothing here yet</p>
+              <p className={`text-small text-muted ${styles.emptySubtitle}`}>
+                Add your first task above to start today&rsquo;s stack.
+              </p>
+            </div>
+          ) : (
+            <>
+              <FocusSection tasks={tasks} onToggle={handleToggle} />
+              <TaskList
+                tasks={activeTasks}
+                onToggle={handleToggle}
+                onDelete={handleDelete}
+                {...starProps}
+                EmptyIcon={doneTasks.length > 0 ? CheckCircle2 : Sun}
+                emptyTitle={doneTasks.length > 0 ? 'All done for today' : undefined}
+                emptySubtitle={
+                  doneTasks.length > 0 ? 'Everything you added is in the Dump below.' : undefined
+                }
+              />
+              <DumpSection tasks={doneTasks} onToggle={handleToggle} onDelete={handleDelete} {...starProps} />
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

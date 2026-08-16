@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
 from datetime import timedelta
 from pathlib import Path
 
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
     'accounts',
     'tasks',
     'family',
+    'billing',
 ]
 
 MIDDLEWARE = [
@@ -158,6 +160,15 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
     'ROTATE_REFRESH_TOKENS': True,
 }
+
+
+# RevenueCat webhook shared secret — required to authenticate
+# POST /api/billing/revenuecat-webhook/ (see billing/views.py
+# RevenueCatWebhookView). Get this value from the RevenueCat dashboard
+# (Project settings > Webhooks > the "Authorization header value" you set
+# there) and set it as an env var; see backend/README.md's Billing section.
+# Unset/empty means the webhook rejects everything (reject-closed).
+REVENUECAT_WEBHOOK_SECRET = os.environ.get('REVENUECAT_WEBHOOK_SECRET', '')
 
 
 # Email

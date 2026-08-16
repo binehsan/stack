@@ -5,6 +5,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from billing.models import FREE_DEVICE_LIMIT, Device, get_or_create_entitlement
+
 from .models import PushToken
 from .serializers import (
     ChangePasswordSerializer,
@@ -24,6 +26,40 @@ def _tokens_for(user):
     }
 
 
+def _register_device_or_reject(user, device_id):
+    """Handles the optional `device_id` field login/register accept.
+    Backward compatible: callers only invoke this when `device_id` is
+    present in the request, so older/unmodified clients that never send it
+    skip all device logic entirely.
+
+    - Same device re-logging-in (an already-known device_id for this user)
+      is always fine — just bumps `last_seen_at`.
+    - A genuinely new device_id enforces the free-tier device cap *before*
+      creating the Device row, so a rejected login/register never leaves a
+      half-registered device behind.
+
+    Returns a Response to short-circuit the caller with if the cap blocks
+    the new device, else None to proceed with issuing tokens as normal.
+    """
+    existing = Device.objects.filter(user=user, device_id=device_id).first()
+    if existing:
+        existing.save()  # bumps last_seen_at (auto_now)
+        return None
+
+    entitlement = get_or_create_entitlement(user)
+    if not entitlement.is_pro and Device.objects.filter(user=user).count() >= FREE_DEVICE_LIMIT:
+        return Response(
+            {
+                'detail': 'Free accounts can sync 1 device. Upgrade to Stack Pro for unlimited devices.',
+                'code': 'PAYWALL_DEVICE_LIMIT',
+            },
+            status=status.HTTP_402_PAYMENT_REQUIRED,
+        )
+
+    Device.objects.create(user=user, device_id=device_id)
+    return None
+
+
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -31,6 +67,13 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+
+        device_id = request.data.get('device_id')
+        if device_id:
+            rejection = _register_device_or_reject(user, device_id)
+            if rejection is not None:
+                return rejection
+
         return Response(_tokens_for(user), status=status.HTTP_201_CREATED)
 
 
@@ -46,6 +89,13 @@ class LoginView(APIView):
                 {'detail': 'Incorrect email or password.'},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+
+        device_id = request.data.get('device_id')
+        if device_id:
+            rejection = _register_device_or_reject(user, device_id)
+            if rejection is not None:
+                return rejection
+
         return Response(_tokens_for(user))
 
 

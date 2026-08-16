@@ -1,0 +1,82 @@
+/* Design tokens — defaults match the mobile app's `dawn` palette so there's
+   no flash-of-unstyled-content before ThemeContext's effect runs on mount.
+   ThemeContext overwrites these same custom properties at runtime. */
+:root {
+  --gradient-1: #FFEB97;
+  --gradient-2: #E7B768;
+  --gradient-3: #583714;
+  --color-card: rgba(255, 250, 235, 0.82);
+  --color-card-border: rgba(88, 55, 20, 0.14);
+  --color-card-elevated: rgba(255, 253, 247, 0.98);
+  --color-text: #3A2413;
+  --color-text-muted: #6B4A28;
+  --color-accent: #A8551C;
+  --color-accent-soft: rgba(168, 85, 28, 0.12);
+  --color-on-accent: #FFFFFF;
+  --color-danger: #D64545;
+  --color-success: #3E8F5D;
+  --color-shadow: #2A1808;
+  --color-overlay: rgba(58, 36, 19, 0.32);
+
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  --font-stack: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  color-scheme: light dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-stack);
+  color: var(--color-text);
+  background: var(--gradient-3);
+  -webkit-font-smoothing: antialiased;
+  transition: color 200ms ease;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+}
+
+button, input, textarea {
+  font-family: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* Typography scale — ported from frontend/src/theme.js's `typography`
+   object so headings/body text read at the same rhythm as the app. */
+.text-header { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; margin: 0; }
+.text-title { font-size: 19px; font-weight: 700; margin: 0; }
+.text-body { font-size: 16px; font-weight: 400; margin: 0; }
+.text-body-strong { font-size: 16px; font-weight: 600; margin: 0; }
+.text-small { font-size: 14px; font-weight: 500; margin: 0; }
+.text-tiny { font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin: 0; }
+
+.text-muted { color: var(--color-text-muted); }
+.text-accent { color: var(--color-accent); }
+
+@media (max-width: 640px) {
+  .text-header { font-size: 26px; }
+}

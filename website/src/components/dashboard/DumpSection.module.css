@@ -1,0 +1,45 @@
+.container {
+  margin-top: var(--space-sm);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  background: none;
+  border: none;
+  padding: var(--space-sm) var(--space-xs);
+  margin: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.headerIcon {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.label {
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
+.count {
+  flex: 1;
+  text-align: left;
+}
+
+.chevron {
+  display: flex;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-xs) 0 0;
+  overflow: hidden;
+}

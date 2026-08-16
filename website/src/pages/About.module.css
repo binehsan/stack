@@ -1,0 +1,159 @@
+.hero {
+  padding: calc(var(--space-xl) * 1.75) var(--space-lg) var(--space-lg);
+  display: flex;
+  justify-content: center;
+}
+
+.heroInner {
+  max-width: 620px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.heroTitle {
+  margin: 0;
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  color: var(--color-text);
+  line-height: 1.15;
+}
+
+.heroBody {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+.storySection {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-lg) var(--space-lg);
+}
+
+.storyBlock {
+  max-width: 640px;
+  width: 100%;
+  background: var(--color-card);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.storyTitle {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.storyBody {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--color-text-muted);
+}
+
+.pillars {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-lg) var(--space-xl);
+}
+
+.pillarsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-md);
+}
+
+.pillarCard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-lg);
+}
+
+.pillarIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-xs);
+}
+
+.pillarTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.pillarBody {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
+.closing {
+  padding: var(--space-lg) var(--space-lg) calc(var(--space-xl) * 1.5);
+  display: flex;
+  justify-content: center;
+}
+
+.closingInner {
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  background: var(--color-card);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+}
+
+.closingTitle {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.closingBody {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 640px) {
+  .heroTitle {
+    font-size: 27px;
+  }
+
+  .storyBlock {
+    padding: var(--space-lg);
+  }
+
+  .pillarsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .closingInner {
+    padding: var(--space-lg);
+  }
+}

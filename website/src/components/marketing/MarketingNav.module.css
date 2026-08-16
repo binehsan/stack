@@ -1,0 +1,132 @@
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--color-card);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--color-card-border);
+}
+
+.inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-sm) var(--space-xl);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--color-text);
+  justify-self: start;
+}
+
+.nav {
+  display: flex;
+  gap: var(--space-xs);
+  justify-self: center;
+}
+
+.navLink {
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 150ms ease, color 150ms ease;
+  white-space: nowrap;
+}
+
+.navLink:hover {
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+}
+
+.navLinkActive {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-self: end;
+}
+
+.menuButton {
+  display: none;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-card-border);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.menuButton:hover {
+  background: var(--color-accent-soft);
+}
+
+.mobileMenu {
+  display: none;
+  overflow: hidden;
+}
+
+@media (max-width: 720px) {
+  .inner {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .nav,
+  .actions {
+    display: none;
+  }
+
+  .menuButton {
+    display: flex;
+    margin-left: auto;
+  }
+
+  .mobileMenu {
+    display: block;
+    border-top: 1px solid var(--color-card-border);
+    padding: var(--space-md);
+  }
+
+  .mobileNav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-md);
+  }
+
+  .mobileNavLink {
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    color: var(--color-text-muted);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .mobileActions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .mobileActions > :global(a) {
+    width: 100%;
+  }
+}

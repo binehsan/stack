@@ -4,6 +4,8 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from billing.models import FREE_GROUP_FOUND_LIMIT, GROUP_MEMBER_ABUSE_CAP, get_or_create_entitlement
+
 from .models import GroupInvite, GroupMembership, GroupStack, GroupTask
 from .push import send_expo_push
 from .serializers import (
@@ -42,6 +44,18 @@ class CreateGroupStackView(APIView):
         name = (request.data.get('name') or '').strip()
         if not name:
             return Response({'detail': 'Give your group stack a name.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        entitlement = get_or_create_entitlement(request.user)
+        if not entitlement.is_pro:
+            founded = GroupStack.objects.filter(created_by=request.user).count()
+            if founded >= FREE_GROUP_FOUND_LIMIT:
+                return Response(
+                    {
+                        'detail': 'Free accounts can found 1 group stack. Upgrade to Stack Pro to found more.',
+                        'code': 'PAYWALL_GROUP_LIMIT',
+                    },
+                    status=status.HTTP_402_PAYMENT_REQUIRED,
+                )
 
         stack = GroupStack.objects.create(name=name, created_by=request.user)
         GroupMembership.objects.create(stack=stack, user=request.user)
@@ -140,7 +154,7 @@ class SendGroupInviteView(APIView):
         send_expo_push(
             invited_user.push_tokens.values_list('token', flat=True),
             title=f'@{request.user.profile.username} invited you',
-            body=f'Join "{membership.stack.name}" on Stack',
+            body=f'Join "{membership.stack.name}"\'s groupStack',
             data={'stackId': membership.stack.id, 'inviteId': invite.id},
         )
 
@@ -165,6 +179,16 @@ class RespondGroupInviteView(APIView):
         if response_action != 'accept':
             return Response(
                 {'detail': 'action must be "accept" or "decline".'}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Abuse-prevention cap, not a paywall — applies to every stack
+        # regardless of either party's tier (see billing app docs). Checked
+        # before accepting so a full stack doesn't silently accept and then
+        # go over.
+        if GroupMembership.objects.filter(stack=invite.stack).count() >= GROUP_MEMBER_ABUSE_CAP:
+            return Response(
+                {'detail': 'This group stack is full (20 members max).', 'code': 'GROUP_MEMBER_CAP'},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         invite.status = GroupInvite.STATUS_ACCEPTED
@@ -259,7 +283,7 @@ class NudgeGroupTaskView(APIView):
 
         send_expo_push(
             target.push_tokens.values_list('token', flat=True),
-            title=f'Nudged on {task.stack.name}',
+            title=f'You have been nudged in {task.stack.name} 🗣️',
             body=task.text,
             data={'stackId': task.stack_id, 'taskId': task.id},
         )
