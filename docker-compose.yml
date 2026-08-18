@@ -1,0 +1,85 @@
+# Production VPS deploy. Two images: `postgres` (official, unmodified) and
+# `backend` (Django/gunicorn). No reverse-proxy container here — this VPS
+# already runs a system nginx + certbot for an unrelated app (the college
+# library site), so instead of a second thing fighting over ports 80/443,
+# that existing nginx gets one more server block (see deploy/nginx/stack.conf)
+# reverse-proxying to `backend` on 127.0.0.1:8001 and serving PWA/dist/ +
+# Django's media/static directly as static files. (An earlier version of
+# this file used a bundled Caddy container for automatic HTTPS — fine on a
+# blank VPS with nothing else on 80/443, not fine here. deploy/caddy/ is
+# kept for that scenario if this ever moves to a dedicated box.)
+#
+# Two different .env files are in play, on purpose:
+#   - .env (this directory) is read by docker-compose ITSELF, for the
+#     ${VAR} substitutions below (POSTGRES_*). It's what wires the same
+#     Postgres credentials into both the `postgres` service (which creates
+#     that user/db on first boot) and `backend` (which connects with them)
+#     without repeating the values.
+#   - backend/.env is read by Django INSIDE the backend container (see
+#     env_file: below) — DJANGO_SECRET_KEY, email, etc. It
+#     deliberately does NOT set POSTGRES_HOST: that value is only ever
+#     "postgres" (the service name below, resolved by Docker's internal
+#     DNS) inside this compose network, so it's hardcoded in `environment:`
+#     instead of treated as a real secret.
+#
+# `media`/`staticfiles` are bind mounts (real host directories under this
+# same folder), not Docker named volumes — nginx runs on the host, not in a
+# container, so it needs an actual filesystem path to point `root` at.
+#
+# One-time setup on the VPS:
+#   1. Copy backend/.env.example -> backend/.env, fill in real values
+#      (DJANGO_SECRET_KEY, DJANGO_DEBUG=false, DJANGO_ALLOWED_HOSTS /
+#      CORS_ALLOWED_ORIGINS set to the real domain).
+#   2. Copy .env.example -> .env (repo root), set POSTGRES_PASSWORD to a
+#      real value.
+#   3. docker compose up -d --build
+#   4. Set up the nginx server block — see deploy/nginx/stack.conf.
+#
+# Every deploy after that is just `docker compose up -d --build` again (see
+# .github/workflows/deploy.yml for doing this over SSH from a git push
+# instead of typing it by hand each time).
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Compose's `depends_on` alone only waits for the container to *start*,
+    # not for Postgres inside it to actually be ready to accept connections
+    # — without this healthcheck, backend's entrypoint.sh could try to
+    # migrate against a Postgres that's still initializing on first boot
+    # and fail. `service_healthy` below makes backend wait for this instead.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file: ./backend/.env
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./media:/app/media
+      - ./staticfiles:/app/staticfiles
+    # Host-local only (127.0.0.1), not a public port — the system nginx is
+    # the only thing meant to be reachable from outside, and it reverse-
+    # proxies to this from the same machine. Never publish this as 0.0.0.0.
+    ports:
+      - "127.0.0.1:8001:8000"
+
+volumes:
+  postgres_data:

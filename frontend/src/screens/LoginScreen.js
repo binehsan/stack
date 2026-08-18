@@ -8,11 +8,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 import { StatusBar } from 'expo-status-bar';
+import { ChevronLeft, Moon, Sun, SunMoon } from 'lucide-react-native';
 
+import GradientBackground from '../components/GradientBackground';
+import Logo from '../components/Logo';
+import SyntaxFooter from '../components/SyntaxFooter';
 import AuthTextField from '../components/AuthTextField';
 import PrimaryButton from '../components/PrimaryButton';
 import ErrorBanner from '../components/ErrorBanner';
@@ -21,7 +24,7 @@ import { useTheme } from '../context/ThemeContext';
 import { radii, spacing, typography } from '../theme';
 
 export default function LoginScreen({ navigation }) {
-  const { theme, toggleTheme, themeName } = useTheme();
+  const { theme, toggleTheme, themeName, isSystemTheme } = useTheme();
   const { login, continueAsGuest } = useAuth();
   const styles = makeStyles(theme);
 
@@ -46,17 +49,43 @@ export default function LoginScreen({ navigation }) {
     }
   }
 
+  // Always land on Home, not just "flip isGuest and hope a state-change
+  // effect notices." If someone is already a guest (e.g. they tapped the
+  // guest CTA, went to Register, then back to Login) `continueAsGuest()`
+  // sets a value that's already true — nothing changes, so App.js's
+  // auth-branch-change effect never fires and this button did nothing.
+  // Navigating explicitly works the same whether this is a genuine
+  // anon->guest transition or someone already in guest mode just wants
+  // back to the app — Home is always a registered route either way.
+  async function handleContinueAsGuest() {
+    await continueAsGuest();
+    navigation.navigate('Home');
+  }
+
   return (
-    <LinearGradient
-      colors={theme.gradient}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.flex}
-    >
+    <GradientBackground style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
         <View style={styles.topBar}>
-          <TouchableOpacity style={styles.themeToggle} onPress={toggleTheme} hitSlop={10}>
-            <Text style={styles.themeToggleText}>{themeName === 'dawn' ? '🌙' : '☀️'}</Text>
+          {navigation.canGoBack() ? (
+            <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()} hitSlop={10}>
+              <ChevronLeft size={20} color={theme.text} />
+            </TouchableOpacity>
+          ) : (
+            // Same footprint as iconButton (keeps the theme toggle pinned
+            // right via topBar's space-between), but invisible — reusing
+            // iconButton's own style here drew a card-colored, bordered
+            // circle with nothing in it, which read as a mystery button
+            // rather than empty space.
+            <View style={[styles.iconButton, styles.iconButtonPlaceholder]} />
+          )}
+          <TouchableOpacity style={styles.iconButton} onPress={toggleTheme} hitSlop={10}>
+            {isSystemTheme ? (
+              <SunMoon size={16} color={theme.text} />
+            ) : themeName === 'dawn' ? (
+              <Sun size={16} color={theme.text} />
+            ) : (
+              <Moon size={16} color={theme.text} />
+            )}
           </TouchableOpacity>
         </View>
         <KeyboardAvoidingView
@@ -74,11 +103,7 @@ export default function LoginScreen({ navigation }) {
               transition={{ type: 'timing', duration: 420 }}
               style={styles.brandMark}
             >
-              <View style={styles.logoStack}>
-                <View style={[styles.logoBar, { width: 40 }]} />
-                <View style={[styles.logoBar, { width: 30, opacity: 0.7 }]} />
-                <View style={[styles.logoBar, { width: 20, opacity: 0.45 }]} />
-              </View>
+              <Logo size={64} />
               <Text style={styles.wordmark}>Stack</Text>
               <Text style={styles.tagline}>Your day, dumped and done.</Text>
             </MotiView>
@@ -120,23 +145,35 @@ export default function LoginScreen({ navigation }) {
               onPress={() => navigation.navigate('Register')}
               activeOpacity={0.7}
             >
-              <Text style={styles.switchText}>
-                New here? <Text style={styles.switchLink}>Create an account</Text>
-              </Text>
+              {/* A card-backed pill, not bare text on the gradient — a flat
+                  muted color can't stay legible across the whole gradient
+                  range (pale at the top, near-black at the bottom), so
+                  secondary text sitting directly on it needs a surface of
+                  its own to guarantee contrast. */}
+              <View style={styles.pill}>
+                <Text style={styles.switchText}>
+                  New here? <Text style={styles.switchLink}>Create an account</Text>
+                </Text>
+              </View>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.guestRow}
-              onPress={continueAsGuest}
+              onPress={handleContinueAsGuest}
               activeOpacity={0.7}
             >
-              <Text style={styles.guestText}>Continue without an account</Text>
+              <View style={styles.pill}>
+                <Text style={styles.guestText}>Continue without an account</Text>
+              </View>
             </TouchableOpacity>
+
+            <SyntaxFooter />
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
       <StatusBar style={theme.statusBarStyle} />
-    </LinearGradient>
+    </GradientBackground>
   );
 }
 
@@ -147,11 +184,11 @@ function makeStyles(theme) {
     },
     topBar: {
       flexDirection: 'row',
-      justifyContent: 'flex-end',
+      justifyContent: 'space-between',
       paddingHorizontal: spacing.lg,
       paddingTop: spacing.sm,
     },
-    themeToggle: {
+    iconButton: {
       width: 36,
       height: 36,
       borderRadius: radii.pill,
@@ -161,9 +198,9 @@ function makeStyles(theme) {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    themeToggleText: {
-      fontSize: 16,
-      color: theme.text,
+    iconButtonPlaceholder: {
+      backgroundColor: 'transparent',
+      borderWidth: 0,
     },
     scroll: {
       flexGrow: 1,
@@ -175,19 +212,10 @@ function makeStyles(theme) {
       alignItems: 'center',
       marginBottom: spacing.xl,
     },
-    logoStack: {
-      alignItems: 'center',
-      gap: 5,
-      marginBottom: spacing.md,
-    },
-    logoBar: {
-      height: 9,
-      borderRadius: 5,
-      backgroundColor: theme.accent,
-    },
     wordmark: {
       ...typography.header,
       color: theme.text,
+      marginTop: spacing.md,
     },
     tagline: {
       ...typography.small,
@@ -215,7 +243,14 @@ function makeStyles(theme) {
     switchRow: {
       alignItems: 'center',
       marginTop: spacing.lg,
+    },
+    pill: {
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: theme.cardBorder,
+      borderRadius: radii.pill,
       paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
     },
     switchText: {
       ...typography.small,
@@ -227,7 +262,7 @@ function makeStyles(theme) {
     },
     guestRow: {
       alignItems: 'center',
-      paddingVertical: spacing.sm,
+      marginTop: spacing.sm,
     },
     guestText: {
       ...typography.small,

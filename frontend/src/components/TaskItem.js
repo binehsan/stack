@@ -1,8 +1,20 @@
 import { useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Swipeable } from 'react-native-gesture-handler';
-import Animated, { FadeInDown, FadeOutDown, LinearTransition } from 'react-native-reanimated';
+// The Reanimated-backed Swipeable, not the default export from
+// 'react-native-gesture-handler' — that default is the legacy version
+// built on React Native's classic Animated API. This one runs the swipe
+// gesture and its follow animation entirely as UI-thread worklets, same
+// as the rest of this app's animations, instead of bridging through the
+// old Animated driver — noticeably smoother under any JS-thread load
+// (e.g. mid-scroll). Already part of react-native-gesture-handler, which
+// was installed before this session — no rebuild needed for this swap.
+// This subpath's Swipeable is a DEFAULT export, not a named one (unlike
+// the main package's legacy `Swipeable`) — a named import here silently
+// resolves to undefined and crashes as soon as any row tries to render it.
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 import { MotiView } from 'moti';
+import { Check, Star, GripVertical } from 'lucide-react-native';
 
 import { useTheme } from '../context/ThemeContext';
 import { radii, spacing } from '../theme';
@@ -21,6 +33,7 @@ export default function TaskItem({
   starDisabled,
   onDrag,
   isDragging,
+  isTopItem,
 }) {
   const { theme } = useTheme();
   const styles = makeStyles(theme);
@@ -56,99 +69,120 @@ export default function TaskItem({
     <Animated.View
       entering={FadeInDown.duration(240)}
       exiting={FadeOutDown.duration(220)}
-      layout={LinearTransition.duration(220)}
+      // No `layout` transition here (there used to be one) — this row
+      // lives inside a NestableDraggableFlatList, whose own
+      // CellRendererComponent already animates each cell's position via
+      // its own Reanimated shared values whenever the list reorders
+      // (that's how the drag-to-reorder visual works at all). Adding a
+      // second, independent layout animation on top of that had this view
+      // animating its own position twice for the same reorder — once
+      // via the list's transform, once via this component's `layout` —
+      // which is redundant work on every visible row during every drag,
+      // and the reorder its own already animates smoothly without it.
+      //
+      // No scale-up while dragging either (there used to be one) — the
+      // "lifted" feel comes entirely from cardDragging's border/shadow
+      // now. A growing card needs room outside its own normal bounds to
+      // grow into, which the drag list's clipped container (see
+      // HomeScreen.js's listArea) doesn't have — the growth was getting
+      // cut off right at that boundary, which looked worse than not
+      // growing at all.
       style={styles.wrapper}
     >
-      {/* Scale-on-drag lives on this outer wrapper, not inside Swipeable.
-          Swipeable clips its own bounds internally (to hide the off-screen
-          delete action), so scaling something inside it clips the scaled-up
-          edges against that boundary. Scaling the Swipeable itself instead
-          scales its clip region along with its content, so nothing crops. */}
-      <MotiView
-        animate={{ scale: isDragging ? 1.03 : 1 }}
-        transition={{ type: 'spring', damping: 18, stiffness: 260 }}
+      <Swipeable
+        ref={swipeableRef}
+        renderRightActions={renderRightActions}
+        overshootRight={false}
+        // Resistance once you've dragged past the delete button's own
+        // width — 1 (the default) is zero friction, which feels like the
+        // row just keeps sliding loosely forever; a higher value gives it
+        // the springy "pushing against something" resistance of a native
+        // swipe action.
+        overshootFriction={8}
+        onSwipeableOpen={handleDelete}
       >
-        <Swipeable
-          ref={swipeableRef}
-          renderRightActions={renderRightActions}
-          overshootRight={false}
-          onSwipeableOpen={handleDelete}
+        <View
+          style={[
+            styles.card,
+            isTopItem && styles.cardTop,
+            // Dragging wins over the top-item treatment if both are ever
+            // true at once (dragging the top card) — a transient "picked
+            // up" state reads better than fighting it for visual priority.
+            isDragging && styles.cardDragging,
+          ]}
         >
-          <View style={[styles.card, isDragging && styles.cardDragging]}>
-            <TouchableOpacity onPress={handleToggle} activeOpacity={0.8} style={styles.checkRow}>
+          <TouchableOpacity onPress={handleToggle} activeOpacity={0.8} style={styles.checkRow}>
+            <MotiView
+              animate={{ scale: bounce ? 1.08 : 1 }}
+              transition={{ type: 'spring', damping: 12, stiffness: 300 }}
+              style={[styles.checkbox, task.completed && styles.checkboxCompleted]}
+            >
               <MotiView
-                animate={{ scale: bounce ? 1.08 : 1 }}
-                transition={{ type: 'spring', damping: 12, stiffness: 300 }}
-                style={[styles.checkbox, task.completed && styles.checkboxCompleted]}
+                animate={{ opacity: task.completed ? 1 : 0, scale: task.completed ? 1 : 0.4 }}
+                transition={{ type: 'timing', duration: 180 }}
               >
-                <MotiView
-                  animate={{ opacity: task.completed ? 1 : 0, scale: task.completed ? 1 : 0.4 }}
-                  transition={{ type: 'timing', duration: 180 }}
-                >
-                  <Text style={styles.checkmark}>✓</Text>
-                </MotiView>
+                <Check size={14} color={theme.onAccent} strokeWidth={3} />
               </MotiView>
+            </MotiView>
 
-              <View
-                style={styles.textWrap}
-                onLayout={(e) => setTextWidth(e.nativeEvent.layout.width)}
+            <View
+              style={styles.textWrap}
+              onLayout={(e) => setTextWidth(e.nativeEvent.layout.width)}
+            >
+              <Text style={[styles.text, task.completed && styles.textCompleted]}>
+                {task.text}
+              </Text>
+              {/* Real textDecorationLine, revealed via an animated width clip —
+                  guarantees the strike sits exactly where the OS renders it
+                  (not an eyeballed overlay line), while still "drawing on". */}
+              <MotiView
+                animate={{ width: task.completed ? textWidth : 0 }}
+                transition={{ type: 'timing', duration: 320 }}
+                style={styles.strikeClip}
               >
-                <Text style={[styles.text, task.completed && styles.textCompleted]}>
+                <Text style={[styles.text, styles.strikeText, { width: textWidth }]}>
                   {task.text}
                 </Text>
-                {/* Real textDecorationLine, revealed via an animated width clip —
-                    guarantees the strike sits exactly where the OS renders it
-                    (not an eyeballed overlay line), while still "drawing on". */}
-                <MotiView
-                  animate={{ width: task.completed ? textWidth : 0 }}
-                  transition={{ type: 'timing', duration: 320 }}
-                  style={styles.strikeClip}
-                >
-                  <Text style={[styles.text, styles.strikeText, { width: textWidth }]}>
-                    {task.text}
-                  </Text>
-                </MotiView>
-              </View>
+              </MotiView>
+            </View>
+          </TouchableOpacity>
+
+          {onToggleStar && (
+            <TouchableOpacity
+              onPress={handleStar}
+              activeOpacity={0.6}
+              style={styles.starButton}
+              hitSlop={12}
+            >
+              <MotiView
+                animate={{ scale: task.starred ? 1.1 : 1 }}
+                transition={{ type: 'spring', damping: 10, stiffness: 300 }}
+                style={!task.starred && starDisabled ? styles.starDisabled : undefined}
+              >
+                <Star
+                  size={20}
+                  color={task.starred ? theme.accent : theme.textMuted}
+                  fill={task.starred ? theme.accent : 'transparent'}
+                  strokeWidth={task.starred ? 0 : 1.75}
+                  opacity={task.starred ? 1 : 0.6}
+                />
+              </MotiView>
             </TouchableOpacity>
+          )}
 
-            {onToggleStar && (
-              <TouchableOpacity
-                onPress={handleStar}
-                activeOpacity={0.6}
-                style={styles.starButton}
-                hitSlop={8}
-              >
-                <MotiView
-                  animate={{ scale: task.starred ? 1.1 : 1 }}
-                  transition={{ type: 'spring', damping: 10, stiffness: 300 }}
-                >
-                  <Text
-                    style={[
-                      styles.star,
-                      task.starred && styles.starActive,
-                      !task.starred && starDisabled && styles.starDisabled,
-                    ]}
-                  >
-                    {task.starred ? '★' : '☆'}
-                  </Text>
-                </MotiView>
-              </TouchableOpacity>
-            )}
-
-            {onDrag && (
-              <TouchableOpacity
-                onLongPress={onDrag}
-                delayLongPress={150}
-                activeOpacity={0.6}
-                style={styles.dragHandle}
-                hitSlop={8}
-              >
-                <Text style={styles.dragHandleText}>☰</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </Swipeable>
-      </MotiView>
+          {onDrag && (
+            <TouchableOpacity
+              onLongPress={onDrag}
+              delayLongPress={150}
+              activeOpacity={0.6}
+              style={styles.dragHandle}
+              hitSlop={8}
+            >
+              <GripVertical size={18} color={theme.textMuted} opacity={0.6} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </Swipeable>
     </Animated.View>
   );
 }
@@ -167,13 +201,27 @@ function makeStyles(theme) {
       borderColor: theme.cardBorder,
       padding: spacing.md,
     },
+    // Whatever's currently first in the stack reads as "next up" — a
+    // visibly deeper shadow than the flat base card, plus a soft accent
+    // tint on the border, without going as far as cardDragging's full
+    // accent outline (that's reserved for the transient "picked up"
+    // state, not a standing one).
+    cardTop: {
+      borderColor: theme.accent + '40',
+      shadowColor: theme.shadow,
+      shadowOffset: { width: 0, height: 5 },
+      shadowOpacity: 0.16,
+      shadowRadius: 12,
+      elevation: 4,
+    },
     cardDragging: {
       borderColor: theme.accent,
+      borderWidth: 2,
       shadowColor: theme.shadow,
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.15,
-      shadowRadius: 14,
-      elevation: 6,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.12,
+      shadowRadius: 6,
+      elevation: 3,
     },
     checkRow: {
       flex: 1,
@@ -192,11 +240,6 @@ function makeStyles(theme) {
     },
     checkboxCompleted: {
       backgroundColor: theme.accent,
-    },
-    checkmark: {
-      color: '#fff',
-      fontSize: 14,
-      fontWeight: '700',
     },
     textWrap: {
       flex: 1,
@@ -222,17 +265,12 @@ function makeStyles(theme) {
       textDecorationColor: theme.textMuted,
     },
     starButton: {
-      paddingLeft: spacing.sm,
-      paddingVertical: spacing.xs,
-    },
-    star: {
-      fontSize: 22,
-      color: theme.textMuted,
-      opacity: 0.5,
-    },
-    starActive: {
-      color: theme.accent,
-      opacity: 1,
+      // Symmetric padding, not just paddingLeft like before — that made
+      // the real tap target lopsided (extra room only on one side of the
+      // icon), so hitSlop's extra invisible margin wasn't centered on
+      // where the star actually looks tappable, and taps aimed at the
+      // visible glyph itself kept landing just outside the target.
+      padding: spacing.sm,
     },
     starDisabled: {
       opacity: 0.25,
@@ -240,11 +278,6 @@ function makeStyles(theme) {
     dragHandle: {
       paddingLeft: spacing.sm,
       paddingVertical: spacing.xs,
-    },
-    dragHandleText: {
-      fontSize: 16,
-      color: theme.textMuted,
-      opacity: 0.6,
     },
     deleteAction: {
       backgroundColor: theme.danger,

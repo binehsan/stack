@@ -9,21 +9,24 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
 import { MotiView } from 'moti';
+import { ChevronLeft, Clipboard, CheckCircle2 } from 'lucide-react-native';
 
+import GradientBackground from '../components/GradientBackground';
 import Avatar from '../components/Avatar';
 import AuthTextField from '../components/AuthTextField';
 import PrimaryButton from '../components/PrimaryButton';
 import ErrorBanner from '../components/ErrorBanner';
 import TaskInput from '../components/TaskInput';
 import GroupTaskItem from '../components/GroupTaskItem';
+import GroupDumpSection from '../components/GroupDumpSection';
 import NudgeModal from '../components/NudgeModal';
 import { useTheme } from '../context/ThemeContext';
 import { usePollingOnFocus } from '../hooks/usePollingOnFocus';
+import { registerForPushNotificationsAsync } from '../notifications/pushRegistration';
 import { radii, spacing, typography } from '../theme';
 import {
   createGroupTask,
@@ -83,6 +86,13 @@ export default function GroupStackDetailScreen({ navigation, route }) {
 
   useEffect(() => {
     loadAll();
+    // Every visit to a group stack is a chance to (re)register this device
+    // for push — not just create/accept-invite (see GroupStacksScreen),
+    // since a member who joined before that flow existed, or whose token
+    // registration silently failed once, would otherwise never get nudged.
+    // registerForPushNotificationsAsync no-ops instantly if already granted
+    // and registered, so this is cheap to call on every mount.
+    registerForPushNotificationsAsync();
   }, [loadAll]);
 
   const pollTickRef = useRef(0);
@@ -213,13 +223,11 @@ export default function GroupStackDetailScreen({ navigation, route }) {
     }
   }
 
+  const activeTasks = tasks.filter((t) => !t.completed);
+  const doneTasks = tasks.filter((t) => t.completed);
+
   return (
-    <LinearGradient
-      colors={theme.gradient}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.flex}
-    >
+    <GradientBackground style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
         <View style={styles.headerRow}>
           <TouchableOpacity
@@ -227,7 +235,7 @@ export default function GroupStackDetailScreen({ navigation, route }) {
             onPress={() => navigation.goBack()}
             hitSlop={8}
           >
-            <Text style={styles.backText}>‹</Text>
+            <ChevronLeft size={22} color={theme.text} />
           </TouchableOpacity>
           <Text style={styles.title} numberOfLines={1}>
             {stack ? stack.name : stackName}
@@ -308,12 +316,18 @@ export default function GroupStackDetailScreen({ navigation, route }) {
               >
                 {tasks.length === 0 ? (
                   <View style={styles.emptyState}>
-                    <Text style={styles.emptyEmoji}>📋</Text>
+                    <Clipboard size={40} color={theme.textMuted} strokeWidth={1.5} style={styles.emptyIcon} />
                     <Text style={styles.emptyTitle}>Nothing on this stack yet</Text>
                     <Text style={styles.emptySubtitle}>Add something above, or nudge it to someone.</Text>
                   </View>
+                ) : activeTasks.length === 0 ? (
+                  <View style={styles.emptyState}>
+                    <CheckCircle2 size={40} color={theme.textMuted} strokeWidth={1.5} style={styles.emptyIcon} />
+                    <Text style={styles.emptyTitle}>All done for now</Text>
+                    <Text style={styles.emptySubtitle}>Everything's in the Dump below.</Text>
+                  </View>
                 ) : (
-                  tasks.map((task) => (
+                  activeTasks.map((task) => (
                     <GroupTaskItem
                       key={task.localId ?? task.id}
                       task={task}
@@ -323,6 +337,13 @@ export default function GroupStackDetailScreen({ navigation, route }) {
                     />
                   ))
                 )}
+
+                <GroupDumpSection
+                  tasks={doneTasks}
+                  onToggle={handleToggleTask}
+                  onDelete={handleDeleteTask}
+                  onNudge={setNudgeTask}
+                />
 
                 <TouchableOpacity style={styles.leaveButton} onPress={handleLeave} activeOpacity={0.7}>
                   <Text style={styles.leaveText}>Leave this stack</Text>
@@ -342,7 +363,7 @@ export default function GroupStackDetailScreen({ navigation, route }) {
       />
 
       <StatusBar style={theme.statusBarStyle} />
-    </LinearGradient>
+    </GradientBackground>
   );
 }
 
@@ -364,11 +385,6 @@ function makeStyles(theme) {
       borderRadius: 18,
       alignItems: 'center',
       justifyContent: 'center',
-    },
-    backText: {
-      fontSize: 24,
-      color: theme.text,
-      fontWeight: '600',
     },
     title: {
       ...typography.title,
@@ -456,8 +472,7 @@ function makeStyles(theme) {
       paddingVertical: spacing.xl,
       gap: spacing.xs,
     },
-    emptyEmoji: {
-      fontSize: 40,
+    emptyIcon: {
       marginBottom: spacing.sm,
     },
     emptyTitle: {

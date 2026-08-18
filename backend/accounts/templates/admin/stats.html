@@ -1,0 +1,86 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<style>
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+  .stats-card {
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 8px;
+    padding: 16px 20px;
+  }
+  .stats-card h3 {
+    margin: 0 0 6px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.65;
+  }
+  .stats-card .value {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .stats-section-title {
+    margin-top: 32px;
+    font-size: 15px;
+    font-weight: 600;
+    opacity: 0.8;
+  }
+</style>
+
+<p>Self-hosted — no third-party analytics account, backed directly by the database. "Active" means an authenticated API request landed within that window (see <code>Profile.last_active_at</code>).</p>
+
+<div class="stats-section-title">Accounts</div>
+<div class="stats-grid">
+  <div class="stats-card">
+    <h3>Total users</h3>
+    <div class="value">{{ total_users }}</div>
+  </div>
+  <div class="stats-card">
+    <h3>Signups today</h3>
+    <div class="value">{{ signups_today }}</div>
+  </div>
+  <div class="stats-card">
+    <h3>Signups this week</h3>
+    <div class="value">{{ signups_this_week }}</div>
+  </div>
+</div>
+
+<div class="stats-section-title">Activity</div>
+<div class="stats-grid">
+  <div class="stats-card">
+    <h3>Active today</h3>
+    <div class="value">{{ active_today }}</div>
+  </div>
+  <div class="stats-card">
+    <h3>Active this week</h3>
+    <div class="value">{{ active_this_week }}</div>
+  </div>
+  <div class="stats-card">
+    <h3>Active this month</h3>
+    <div class="value">{{ active_this_month }}</div>
+  </div>
+</div>
+
+<div class="stats-section-title">Usage</div>
+<div class="stats-grid">
+  <div class="stats-card">
+    <h3>Total tasks</h3>
+    <div class="value">{{ total_tasks }}</div>
+  </div>
+  <div class="stats-card">
+    <h3>Group stacks</h3>
+    <div class="value">{{ total_group_stacks }}</div>
+  </div>
+  <div class="stats-card">
+    <h3>Push subscriptions</h3>
+    <div class="value">{{ total_push_subscriptions }}</div>
+  </div>
+</div>
+{% endblock %}

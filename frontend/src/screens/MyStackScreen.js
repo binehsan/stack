@@ -8,12 +8,26 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
 import { MotiView } from 'moti';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Smile,
+  Lock,
+  Edit2,
+  Zap,
+  Award,
+  CheckCircle2,
+  Calendar,
+  Star,
+} from 'lucide-react-native';
 
+import GradientBackground from '../components/GradientBackground';
 import Avatar from '../components/Avatar';
 import StatTile from '../components/StatTile';
 import AuthTextField from '../components/AuthTextField';
@@ -21,19 +35,27 @@ import PrimaryButton from '../components/PrimaryButton';
 import ErrorBanner from '../components/ErrorBanner';
 import DeleteAccountModal from '../components/DeleteAccountModal';
 import SignUpNudgeModal from '../components/SignUpNudgeModal';
+import HourPickerModal from '../components/HourPickerModal';
+import SyntaxFooter from '../components/SyntaxFooter';
 import { useAuth } from '../auth/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { fetchStats } from '../api/tasks';
 import { fetchProfile, updateProfile, uploadAvatar } from '../api/auth';
-import { radii, spacing, typography } from '../theme';
+import { radii, spacing, themeFamilies, themes, typography } from '../theme';
 
-const RESET_PRESETS = [
-  { hour: 0, label: 'Midnight' },
-  { hour: 3, label: '3 AM' },
-  { hour: 4, label: '4 AM' },
-  { hour: 5, label: '5 AM' },
-  { hour: 6, label: '6 AM' },
-];
+// Every hour, not a handful of presets — the backend already accepts any
+// 0-23 value (see accounts/serializers.py's validate_reset_hour), so
+// picking from just 5 fixed options was a frontend-only limitation.
+const RESET_HOURS = Array.from({ length: 24 }, (_, hour) => ({
+  hour,
+  label: formatHourLabel(hour),
+}));
+
+function formatHourLabel(hour) {
+  if (hour === 0) return '12 AM';
+  if (hour === 12) return '12 PM';
+  return hour < 12 ? `${hour} AM` : `${hour - 12} PM`;
+}
 
 export default function MyStackScreen({ navigation }) {
   const { isAuthenticated } = useAuth();
@@ -56,12 +78,7 @@ function GuestMyStackPanel({ navigation }) {
   const [nudgeReason, setNudgeReason] = useState(null);
 
   return (
-    <LinearGradient
-      colors={theme.gradient}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.flex}
-    >
+    <GradientBackground style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
         <View style={styles.headerRow}>
           <TouchableOpacity
@@ -69,7 +86,7 @@ function GuestMyStackPanel({ navigation }) {
             onPress={() => navigation.goBack()}
             hitSlop={8}
           >
-            <Text style={styles.backText}>‹</Text>
+            <ChevronLeft size={22} color={theme.text} />
           </TouchableOpacity>
           <Text style={styles.title}>myStack</Text>
           <View style={styles.backButton} />
@@ -82,7 +99,9 @@ function GuestMyStackPanel({ navigation }) {
             transition={{ type: 'timing', duration: 300 }}
             style={guestStyles.card}
           >
-            <Text style={guestStyles.emoji}>👋</Text>
+            <View style={guestStyles.iconWrap}>
+              <Smile size={28} color={theme.accent} strokeWidth={1.75} />
+            </View>
             <Text style={guestStyles.heading}>You're using Stack as a guest</Text>
             <Text style={guestStyles.subheading}>
               Your tasks are only on this device. Sign up free to sync across devices, see your
@@ -107,16 +126,22 @@ function GuestMyStackPanel({ navigation }) {
               onPress={() => setNudgeReason('groupStacks')}
               activeOpacity={0.7}
             >
-              <Text style={styles.rowButtonText}>🔒 Group Stacks</Text>
-              <Text style={styles.chevron}>›</Text>
+              <View style={styles.rowButtonLabel}>
+                <Lock size={15} color={theme.textMuted} />
+                <Text style={styles.rowButtonText}>Group Stacks</Text>
+              </View>
+              <ChevronRight size={18} color={theme.textMuted} />
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.rowButton, styles.rowButtonLast]}
               onPress={() => setNudgeReason('stats')}
               activeOpacity={0.7}
             >
-              <Text style={styles.rowButtonText}>🔒 Your Stats</Text>
-              <Text style={styles.chevron}>›</Text>
+              <View style={styles.rowButtonLabel}>
+                <Lock size={15} color={theme.textMuted} />
+                <Text style={styles.rowButtonText}>Your Stats</Text>
+              </View>
+              <ChevronRight size={18} color={theme.textMuted} />
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -133,14 +158,18 @@ function GuestMyStackPanel({ navigation }) {
       />
 
       <StatusBar style={theme.statusBarStyle} />
-    </LinearGradient>
+    </GradientBackground>
   );
 }
 
 function AccountMyStackPanel({ navigation }) {
-  const { theme } = useTheme();
+  const { theme, themeFamily, setThemeFamily } = useTheme();
   const { email, logout, changePassword, deleteAccount } = useAuth();
   const styles = makeStyles(theme);
+
+  function handleSelectFamily(family) {
+    setThemeFamily(family.id);
+  }
 
   const [profile, setProfile] = useState(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -152,6 +181,7 @@ function AccountMyStackPanel({ navigation }) {
   const [usernameSaving, setUsernameSaving] = useState(false);
 
   const [resetHourSaving, setResetHourSaving] = useState(false);
+  const [showHourPicker, setShowHourPicker] = useState(false);
 
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -226,6 +256,7 @@ function AccountMyStackPanel({ navigation }) {
   }
 
   async function handleSelectResetHour(hour) {
+    setShowHourPicker(false);
     if (!profile || profile.reset_hour === hour || resetHourSaving) return;
     setResetHourSaving(true);
     try {
@@ -269,12 +300,7 @@ function AccountMyStackPanel({ navigation }) {
   }
 
   return (
-    <LinearGradient
-      colors={theme.gradient}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.flex}
-    >
+    <GradientBackground style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
         <View style={styles.headerRow}>
           <TouchableOpacity
@@ -282,7 +308,7 @@ function AccountMyStackPanel({ navigation }) {
             onPress={() => navigation.goBack()}
             hitSlop={8}
           >
-            <Text style={styles.backText}>‹</Text>
+            <ChevronLeft size={22} color={theme.text} />
           </TouchableOpacity>
           <Text style={styles.title}>myStack</Text>
           <View style={styles.backButton} />
@@ -299,9 +325,9 @@ function AccountMyStackPanel({ navigation }) {
               <Avatar uri={profile?.avatar} label={profile?.username || email} size={72} />
               <View style={styles.avatarBadge}>
                 {avatarUploading ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={theme.onAccent} />
                 ) : (
-                  <Text style={styles.avatarBadgeText}>✏️</Text>
+                  <Edit2 size={12} color={theme.onAccent} strokeWidth={2.5} />
                 )}
               </View>
             </TouchableOpacity>
@@ -350,23 +376,23 @@ function AccountMyStackPanel({ navigation }) {
           ) : stats ? (
             <View style={styles.statsGrid}>
               <StatTile
-                emoji="🔥"
+                Icon={Zap}
                 value={stats.current_streak}
                 label="Hot Streak"
                 sublabel={stats.current_streak === 1 ? 'day' : 'days'}
               />
               <StatTile
-                emoji="🏆"
+                Icon={Award}
                 value={stats.longest_streak}
                 label="Record Streak"
                 sublabel={stats.longest_streak === 1 ? 'day' : 'days'}
                 delay={40}
               />
-              <StatTile emoji="✅" value={stats.total_completed} label="Tasks Crushed" delay={80} />
-              <StatTile emoji="📅" value={stats.days_active} label="Stack Sessions" delay={120} />
+              <StatTile Icon={CheckCircle2} value={stats.total_completed} label="Tasks Crushed" delay={80} />
+              <StatTile Icon={Calendar} value={stats.days_active} label="Stack Sessions" delay={120} />
               {stats.best_day && (
                 <StatTile
-                  emoji="⭐"
+                  Icon={Star}
                   value={stats.best_day.completed}
                   label="Best Day Ever"
                   sublabel={formatDate(stats.best_day.date)}
@@ -381,19 +407,77 @@ function AccountMyStackPanel({ navigation }) {
               <Text style={styles.rowButtonText}>Daily reset time</Text>
               <Text style={styles.resetTimeSubtext}>When today's stack rolls into tomorrow's</Text>
             </View>
-            <View style={styles.resetChipsRow}>
-              {RESET_PRESETS.map((preset) => {
-                const active = profile?.reset_hour === preset.hour;
+            <TouchableOpacity
+              style={styles.timeField}
+              onPress={() => setShowHourPicker(true)}
+              disabled={resetHourSaving}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.timeFieldValue}>
+                {formatHourLabel(profile?.reset_hour ?? 0)}
+              </Text>
+              {resetHourSaving ? (
+                <ActivityIndicator size="small" color={theme.accent} />
+              ) : (
+                <ChevronDown size={18} color={theme.textMuted} />
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <HourPickerModal
+            visible={showHourPicker}
+            hours={RESET_HOURS}
+            selectedHour={profile?.reset_hour ?? 0}
+            onSelect={handleSelectResetHour}
+            onClose={() => setShowHourPicker(false)}
+          />
+
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={[styles.rowButton, styles.rowButtonLast]}
+              onPress={() => navigation.navigate('GroupStacks')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.rowButtonText}>Group Stacks</Text>
+              <ChevronRight size={18} color={theme.textMuted} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.themeSectionHeader}>
+              <Text style={styles.rowButtonText}>Theme</Text>
+              <Text style={styles.resetTimeSubtext}>
+                Pick a color family — your light/dark setting still applies on top
+              </Text>
+            </View>
+            <View style={styles.themeSwatchRow}>
+              {themeFamilies.map((family) => {
+                const selected = family.id === themeFamily;
                 return (
                   <TouchableOpacity
-                    key={preset.hour}
-                    style={[styles.resetChip, active && styles.resetChipActive]}
-                    onPress={() => handleSelectResetHour(preset.hour)}
-                    disabled={resetHourSaving}
-                    activeOpacity={0.7}
+                    key={family.id}
+                    style={styles.themeSwatchWrap}
+                    onPress={() => handleSelectFamily(family)}
+                    activeOpacity={0.8}
                   >
-                    <Text style={[styles.resetChipText, active && styles.resetChipTextActive]}>
-                      {preset.label}
+                    <View
+                      style={[
+                        styles.themeSwatchRing,
+                        selected && { borderColor: theme.accent },
+                      ]}
+                    >
+                      <LinearGradient
+                        colors={themes[family.light].gradient}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.themeSwatch}
+                      />
+                    </View>
+                    <Text
+                      style={[styles.themeSwatchLabel, selected && { color: theme.accent, fontWeight: '700' }]}
+                      numberOfLines={1}
+                    >
+                      {family.label}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -403,23 +487,16 @@ function AccountMyStackPanel({ navigation }) {
 
           <View style={styles.section}>
             <TouchableOpacity
-              style={[styles.rowButton, styles.rowButtonLast]}
-              onPress={() => navigation.navigate('GroupStacks')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.rowButtonText}>Group Stacks</Text>
-              <Text style={styles.chevron}>›</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.section}>
-            <TouchableOpacity
               style={styles.rowButton}
               onPress={() => setShowPasswordForm((prev) => !prev)}
               activeOpacity={0.7}
             >
               <Text style={styles.rowButtonText}>Change password</Text>
-              <Text style={styles.chevron}>{showPasswordForm ? '▾' : '›'}</Text>
+              {showPasswordForm ? (
+                <ChevronDown size={18} color={theme.textMuted} />
+              ) : (
+                <ChevronRight size={18} color={theme.textMuted} />
+              )}
             </TouchableOpacity>
 
             {showPasswordForm && (
@@ -475,7 +552,8 @@ function AccountMyStackPanel({ navigation }) {
                 animate={{ opacity: 1, translateY: 0 }}
                 style={styles.successBanner}
               >
-                <Text style={styles.successText}>Password updated ✓</Text>
+                <CheckCircle2 size={14} color={theme.success} />
+                <Text style={styles.successText}>Password updated</Text>
               </MotiView>
             )}
 
@@ -491,6 +569,8 @@ function AccountMyStackPanel({ navigation }) {
               <Text style={styles.dangerText}>Delete account</Text>
             </TouchableOpacity>
           </View>
+
+          <SyntaxFooter showDetails />
         </ScrollView>
       </SafeAreaView>
 
@@ -501,7 +581,7 @@ function AccountMyStackPanel({ navigation }) {
       />
 
       <StatusBar style={theme.statusBarStyle} />
-    </LinearGradient>
+    </GradientBackground>
   );
 }
 
@@ -516,8 +596,13 @@ function makeGuestStyles(theme) {
       padding: spacing.xl,
       gap: spacing.sm,
     },
-    emoji: {
-      fontSize: 36,
+    iconWrap: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: theme.accentSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
       marginBottom: spacing.xs,
     },
     heading: {
@@ -567,11 +652,6 @@ function makeStyles(theme) {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    backText: {
-      fontSize: 24,
-      color: theme.text,
-      fontWeight: '600',
-    },
     title: {
       ...typography.title,
       color: theme.text,
@@ -604,9 +684,6 @@ function makeStyles(theme) {
       justifyContent: 'center',
       borderWidth: 2,
       borderColor: theme.card,
-    },
-    avatarBadgeText: {
-      fontSize: 11,
     },
     username: {
       ...typography.bodyStrong,
@@ -671,27 +748,57 @@ function makeStyles(theme) {
       color: theme.textMuted,
       marginTop: 2,
     },
-    resetChipsRow: {
+    themeSectionHeader: {
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.md,
+    },
+    themeSwatchRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: spacing.xs,
+      gap: spacing.md,
       padding: spacing.md,
     },
-    resetChip: {
-      paddingVertical: spacing.xs,
-      paddingHorizontal: spacing.sm,
-      borderRadius: radii.pill,
-      backgroundColor: theme.accentSoft,
+    themeSwatchWrap: {
+      alignItems: 'center',
+      width: 68,
     },
-    resetChipActive: {
-      backgroundColor: theme.accent,
+    themeSwatchRing: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      padding: 3,
+      borderWidth: 2,
+      borderColor: 'transparent',
     },
-    resetChipText: {
+    themeSwatch: {
+      flex: 1,
+      borderRadius: 22,
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+    },
+    themeSwatchLabel: {
       ...typography.tiny,
-      color: theme.accent,
+      color: theme.textMuted,
+      marginTop: spacing.xs,
+      textAlign: 'center',
     },
-    resetChipTextActive: {
-      color: '#fff',
+    timeField: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      margin: spacing.md,
+      marginTop: spacing.sm,
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: theme.cardBorder,
+      borderRadius: radii.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm + 4,
+    },
+    timeFieldValue: {
+      ...typography.bodyStrong,
+      color: theme.text,
     },
     rowButton: {
       flexDirection: 'row',
@@ -705,13 +812,14 @@ function makeStyles(theme) {
     rowButtonLast: {
       borderBottomWidth: 0,
     },
+    rowButtonLabel: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+    },
     rowButtonText: {
       ...typography.body,
       color: theme.text,
-    },
-    chevron: {
-      fontSize: 16,
-      color: theme.textMuted,
     },
     dangerText: {
       ...typography.body,
@@ -726,6 +834,9 @@ function makeStyles(theme) {
       borderBottomColor: theme.cardBorder,
     },
     successBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
       paddingVertical: spacing.sm,
       paddingHorizontal: spacing.md,
       backgroundColor: theme.success + '1A',

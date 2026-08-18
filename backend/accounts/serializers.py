@@ -1,7 +1,14 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from .models import Profile, PushToken, clean_username, generate_unique_username, username_taken
+from .models import (
+    Profile,
+    PushToken,
+    WebPushSubscription,
+    clean_username,
+    generate_unique_username,
+    username_taken,
+)
 
 
 class RegisterSerializer(serializers.Serializer):
@@ -65,6 +72,22 @@ class ChangePasswordSerializer(serializers.Serializer):
         return attrs
 
 
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(write_only=True, min_length=8)
+    new_password_confirm = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['new_password_confirm']:
+            raise serializers.ValidationError({'new_password_confirm': "Passwords don't match."})
+        return attrs
+
+
 class ProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source='user.email', read_only=True)
 
@@ -100,3 +123,14 @@ class PushTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = PushToken
         fields = ['token']
+
+
+class WebPushSubscriptionSerializer(serializers.ModelSerializer):
+    """Shape matches `PushSubscription.toJSON()` from the browser's Push
+    API directly: {endpoint, keys: {p256dh, auth}} — see
+    RegisterWebPushSubscriptionView for how the nested `keys` object gets
+    flattened onto the model's own p256dh/auth fields."""
+
+    class Meta:
+        model = WebPushSubscription
+        fields = ['endpoint', 'p256dh', 'auth']

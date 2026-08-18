@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { MotiView } from 'moti';
+import { Trash2, ChevronDown } from 'lucide-react-native';
 
 import TaskItem from './TaskItem';
 import { useTheme } from '../context/ThemeContext';
@@ -29,13 +30,14 @@ export default function DumpSection({ tasks, onToggle, onDelete, onToggleStar, s
         onPress={() => setExpanded((prev) => !prev)}
         activeOpacity={0.7}
       >
-        <Text style={styles.label}>🗑️ Dump</Text>
+        <Trash2 size={14} color={theme.textMuted} strokeWidth={2} />
+        <Text style={styles.label}>Dump</Text>
         <Text style={styles.count}>{tasks.length} done</Text>
         <MotiView
           animate={{ rotate: expanded ? '180deg' : '0deg' }}
           transition={{ type: 'timing', duration: 200 }}
         >
-          <Text style={styles.chevron}>▾</Text>
+          <ChevronDown size={16} color={theme.textMuted} />
         </MotiView>
       </TouchableOpacity>
 
@@ -78,10 +80,6 @@ function makeStyles(theme) {
       ...typography.tiny,
       color: theme.textMuted,
       flex: 1,
-    },
-    chevron: {
-      fontSize: 16,
-      color: theme.textMuted,
     },
   });
 }

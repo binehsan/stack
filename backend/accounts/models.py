@@ -49,6 +49,11 @@ class Profile(models.Model):
     # Hour (0-23) the daily stack resets at, in the server's configured
     # TIME_ZONE. 0 = midnight (the original behavior).
     reset_hour = models.PositiveSmallIntegerField(default=0)
+    # Updated by accounts/middleware.py's TrackLastActiveMiddleware on any
+    # authenticated API request, throttled to roughly once per 5 minutes per
+    # user — backs the DAU/WAU counts on the admin stats page
+    # (accounts/admin.py's stats view), not shown to the user themselves.
+    last_active_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f'@{self.username}'
@@ -67,3 +72,23 @@ class PushToken(models.Model):
 
     def __str__(self):
         return self.token
+
+
+class WebPushSubscription(models.Model):
+    """The PWA's equivalent of PushToken — one browser's Push API
+    subscription (see PWA/src/push/usePushSubscription.js), used by
+    accounts/webpush.py's send_web_push instead of the Expo push service.
+    `endpoint` (not a single opaque token) is what the Push API gives a
+    browser, and it's already globally unique per subscription, so it's the
+    natural upsert/delete key — see RegisterWebPushSubscriptionView."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='webpush_subscriptions'
+    )
+    endpoint = models.URLField(max_length=500, unique=True)
+    p256dh = models.CharField(max_length=200)
+    auth = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.user} / {self.endpoint[:40]}...'

@@ -4,9 +4,9 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from billing.models import FREE_GROUP_FOUND_LIMIT, GROUP_MEMBER_ABUSE_CAP, get_or_create_entitlement
+from accounts.webpush import send_web_push
 
-from .models import GroupInvite, GroupMembership, GroupStack, GroupTask
+from .models import GROUP_MEMBER_ABUSE_CAP, GroupInvite, GroupMembership, GroupStack, GroupTask
 from .push import send_expo_push
 from .serializers import (
     GroupInviteSerializer,
@@ -44,18 +44,6 @@ class CreateGroupStackView(APIView):
         name = (request.data.get('name') or '').strip()
         if not name:
             return Response({'detail': 'Give your group stack a name.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        entitlement = get_or_create_entitlement(request.user)
-        if not entitlement.is_pro:
-            founded = GroupStack.objects.filter(created_by=request.user).count()
-            if founded >= FREE_GROUP_FOUND_LIMIT:
-                return Response(
-                    {
-                        'detail': 'Free accounts can found 1 group stack. Upgrade to Stack Pro to found more.',
-                        'code': 'PAYWALL_GROUP_LIMIT',
-                    },
-                    status=status.HTTP_402_PAYMENT_REQUIRED,
-                )
 
         stack = GroupStack.objects.create(name=name, created_by=request.user)
         GroupMembership.objects.create(stack=stack, user=request.user)
@@ -153,6 +141,12 @@ class SendGroupInviteView(APIView):
         # to open the app and check.
         send_expo_push(
             invited_user.push_tokens.values_list('token', flat=True),
+            title=f'@{request.user.profile.username} invited you',
+            body=f'Join "{membership.stack.name}"\'s groupStack',
+            data={'stackId': membership.stack.id, 'inviteId': invite.id},
+        )
+        send_web_push(
+            invited_user.webpush_subscriptions.all(),
             title=f'@{request.user.profile.username} invited you',
             body=f'Join "{membership.stack.name}"\'s groupStack',
             data={'stackId': membership.stack.id, 'inviteId': invite.id},
@@ -283,6 +277,12 @@ class NudgeGroupTaskView(APIView):
 
         send_expo_push(
             target.push_tokens.values_list('token', flat=True),
+            title=f'You have been nudged in {task.stack.name} 🗣️',
+            body=task.text,
+            data={'stackId': task.stack_id, 'taskId': task.id},
+        )
+        send_web_push(
+            target.webpush_subscriptions.all(),
             title=f'You have been nudged in {task.stack.name} 🗣️',
             body=task.text,
             data={'stackId': task.stack_id, 'taskId': task.id},

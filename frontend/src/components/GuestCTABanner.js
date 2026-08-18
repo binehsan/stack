@@ -1,4 +1,5 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ChevronRight } from 'lucide-react-native';
 
 import { useTheme } from '../context/ThemeContext';
 import { radii, spacing, typography } from '../theme';
@@ -13,10 +14,10 @@ export default function GuestCTABanner({ onPress }) {
   return (
     <TouchableOpacity style={styles.banner} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.textWrap}>
-        <Text style={styles.title}>ur stack, wherever u are</Text>
+        <Text style={styles.title}>Your stack, wherever u are</Text>
         <Text style={styles.subtitle}>Sign up free for sync, stats, and group stacks</Text>
       </View>
-      <Text style={styles.arrow}>›</Text>
+      <ChevronRight size={22} color={theme.accent} />
     </TouchableOpacity>
   );
 }
@@ -26,6 +27,7 @@ function makeStyles(theme) {
     banner: {
       flexDirection: 'row',
       alignItems: 'center',
+      gap: spacing.sm,
       backgroundColor: theme.accentSoft,
       borderWidth: 1,
       borderColor: theme.cardBorder,
@@ -45,11 +47,6 @@ function makeStyles(theme) {
       ...typography.tiny,
       color: theme.textMuted,
       marginTop: 2,
-    },
-    arrow: {
-      fontSize: 22,
-      color: theme.accent,
-      marginLeft: spacing.sm,
     },
   });
 }

@@ -1,5 +1,6 @@
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MotiView } from 'moti';
+import { Users, BarChart2, RefreshCw, Sparkles } from 'lucide-react-native';
 
 import PrimaryButton from './PrimaryButton';
 import { useTheme } from '../context/ThemeContext';
@@ -10,25 +11,25 @@ import { radii, spacing, typography } from '../theme';
 // pitch text depending on what they were trying to reach.
 const REASON_COPY = {
   groupStacks: {
-    emoji: '👥',
+    Icon: Users,
     title: 'Group stacks need an account',
     subtitle:
       "Create a free account to share a task list with family, friends, or anyone else — everyone can add items and see who's on the hook.",
   },
   stats: {
-    emoji: '📊',
+    Icon: BarChart2,
     title: 'Track your stats with an account',
     subtitle:
       'Streaks, totals, and your best day ever — saved to a free account instead of just this device.',
   },
   sync: {
-    emoji: '🔄',
+    Icon: RefreshCw,
     title: 'Sync across devices',
-    subtitle: "Create a free account and your stack follows you — ur stack, wherever u are.",
+    subtitle: "Create a free account and your stack follows you — your stack, wherever u are.",
   },
 };
 const DEFAULT_COPY = {
-  emoji: '✨',
+  Icon: Sparkles,
   title: 'Create a free account',
   subtitle: 'Unlock cross-device sync, stats, and group stacks — all free, no paid tier here.',
 };
@@ -50,7 +51,9 @@ export default function SignUpNudgeModal({ visible, reason, onCreateAccount, onD
           transition={{ type: 'timing', duration: 220 }}
           style={styles.card}
         >
-          <Text style={styles.emoji}>{copy.emoji}</Text>
+          <View style={styles.iconWrap}>
+            <copy.Icon size={28} color={theme.accent} strokeWidth={1.75} />
+          </View>
           <Text style={styles.title}>{copy.title}</Text>
           <Text style={styles.subtitle}>{copy.subtitle}</Text>
 
@@ -84,9 +87,14 @@ function makeStyles(theme) {
       borderColor: theme.cardBorder,
       padding: spacing.xl,
     },
-    emoji: {
-      fontSize: 36,
-      marginBottom: spacing.sm,
+    iconWrap: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: theme.accentSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: spacing.md,
     },
     title: {
       ...typography.title,

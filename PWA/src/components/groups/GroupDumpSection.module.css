@@ -1,0 +1,36 @@
+.container {
+  margin-top: var(--space-sm);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm) var(--space-xs);
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  text-align: left;
+}
+
+.label {
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
+.count {
+  color: var(--color-text-muted);
+  flex: 1;
+}
+
+.chevron {
+  display: flex;
+  align-items: center;
+}
+
+.list {
+  overflow: hidden;
+  padding-top: var(--space-xs);
+}

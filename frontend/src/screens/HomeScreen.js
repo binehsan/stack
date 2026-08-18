@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppState,
   KeyboardAvoidingView,
@@ -9,18 +9,19 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useFocusEffect } from '@react-navigation/native';
 import { NestableScrollContainer } from 'react-native-draggable-flatlist';
 import * as SecureStore from 'expo-secure-store';
 import { MotiView } from 'moti';
+import { RefreshCw, Moon, Sun, SunMoon, User, X, CheckCircle2, Plus } from 'lucide-react-native';
 
+import GradientBackground from '../components/GradientBackground';
+import Logo from '../components/Logo';
 import TaskInput from '../components/TaskInput';
 import TaskList from '../components/TaskList';
 import FocusSection from '../components/FocusSection';
-import QuickAddChips from '../components/QuickAddChips';
 import DumpSection from '../components/DumpSection';
 import CarryForwardModal from '../components/CarryForwardModal';
 import RecapModal from '../components/RecapModal';
@@ -31,7 +32,8 @@ import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme';
 import * as accountTasksApi from '../api/tasks';
 import * as localTasksApi from '../api/localTasks';
-import { fetchCarryForwardCandidates, fetchRecap, fetchSuggestions, submitCarryForward } from '../api/tasks';
+import { fetchCarryForwardCandidates, fetchRecap, submitCarryForward } from '../api/tasks';
+import { fetchProfile } from '../api/auth';
 import { fetchMyGroupStacks } from '../api/groupStacks';
 
 const RECAP_SHOWN_KEY = 'stack_recap_shown_date';
@@ -43,7 +45,7 @@ const MAX_FOCUS_STARS = 3;
 const DUMP_DELAY_MS = 320;
 
 export default function HomeScreen({ navigation }) {
-  const { theme, toggleTheme, themeName } = useTheme();
+  const { theme, toggleTheme, themeName, isSystemTheme } = useTheme();
   const { isAuthenticated, importedTaskCount, clearImportedTaskCount } = useAuth();
   const styles = makeStyles(theme);
 
@@ -55,8 +57,10 @@ export default function HomeScreen({ navigation }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [suggestions, setSuggestions] = useState([]);
   const [groupStacks, setGroupStacks] = useState([]);
+  // Just for the header's account button — shows the user's real avatar
+  // instead of a generic person icon once it's loaded.
+  const [profile, setProfile] = useState(null);
   const [justCompletedIds, setJustCompletedIds] = useState(() => new Set());
   const dumpTimers = useRef({});
   const isFirstFocus = useRef(true);
@@ -73,16 +77,14 @@ export default function HomeScreen({ navigation }) {
       .catch((err) => console.warn('Failed to load tasks:', err.message))
       .finally(() => setLoading(false));
 
-    // Suggestions, group stacks, recap, and carry-forward are all
-    // account-only features — a guest has no server-side history for any
-    // of them to draw from.
+    // Group stacks, recap, and carry-forward are all account-only features
+    // — a guest has no server-side history for any of them to draw from.
     if (isAuthenticated) {
-      fetchSuggestions()
-        .then(setSuggestions)
-        .catch((err) => console.warn('Failed to load suggestions:', err.message));
-
       fetchMyGroupStacks()
         .then(setGroupStacks)
+        .catch(() => {});
+      fetchProfile()
+        .then(setProfile)
         .catch(() => {});
 
       loadDailyPrompts();
@@ -110,6 +112,9 @@ export default function HomeScreen({ navigation }) {
         fetchMyGroupStacks()
           .then(setGroupStacks)
           .catch(() => {});
+        fetchProfile()
+          .then(setProfile)
+          .catch(() => {});
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAuthenticated])
@@ -128,16 +133,7 @@ export default function HomeScreen({ navigation }) {
   async function handleRefresh() {
     setRefreshing(true);
     try {
-      if (isAuthenticated) {
-        const [freshTasks, freshSuggestions] = await Promise.all([
-          tasksApi.fetchTasks(),
-          fetchSuggestions(),
-        ]);
-        setTasks(freshTasks);
-        setSuggestions(freshSuggestions);
-      } else {
-        setTasks(await tasksApi.fetchTasks());
-      }
+      setTasks(await tasksApi.fetchTasks());
     } catch (err) {
       console.warn('Failed to refresh:', err.message);
     } finally {
@@ -324,18 +320,24 @@ export default function HomeScreen({ navigation }) {
     }
   }
 
-  const starredCount = tasks.filter((t) => t.starred).length;
-  const activeTasks = tasks.filter((t) => !t.completed || justCompletedIds.has(t.id));
-  const doneTasks = tasks.filter((t) => t.completed && !justCompletedIds.has(t.id));
+  // Memoized so an unrelated re-render (e.g. the refresh-icon spin, which is
+  // just local `refreshing` state) doesn't hand the draggable list a fresh
+  // array reference every time — react-native-draggable-flatlist treats a
+  // new `data` reference as "this may have changed" and re-diffs, which
+  // adds up as a list grows. Recomputes only when the inputs actually do.
+  const starredCount = useMemo(() => tasks.filter((t) => t.starred).length, [tasks]);
+  const activeTasks = useMemo(
+    () => tasks.filter((t) => !t.completed || justCompletedIds.has(t.id)),
+    [tasks, justCompletedIds]
+  );
+  const doneTasks = useMemo(
+    () => tasks.filter((t) => t.completed && !justCompletedIds.has(t.id)),
+    [tasks, justCompletedIds]
+  );
   const starProps = { onToggleStar: handleToggleStar, starDisabled: starredCount >= MAX_FOCUS_STARS };
 
   return (
-    <LinearGradient
-      colors={theme.gradient}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.flex}
-    >
+    <GradientBackground style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
         <KeyboardAvoidingView
           style={styles.flex}
@@ -344,7 +346,7 @@ export default function HomeScreen({ navigation }) {
         >
           <View style={styles.container}>
             <View style={styles.headerRow}>
-              <Text style={styles.header}>Stack</Text>
+              <Logo size={36} />
               <View style={styles.headerActions}>
                 <TouchableOpacity
                   style={styles.iconButton}
@@ -360,18 +362,32 @@ export default function HomeScreen({ navigation }) {
                         : { type: 'timing', duration: 0 }
                     }
                   >
-                    <Text style={styles.iconButtonText}>🔄</Text>
+                    <RefreshCw size={16} color={theme.text} />
                   </MotiView>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.iconButton} onPress={toggleTheme} hitSlop={8}>
-                  <Text style={styles.iconButtonText}>{themeName === 'dawn' ? '🌙' : '☀️'}</Text>
+                  {/* Shows which mode is active, not which one a tap leads
+                      to — with three stops (system → dawn → dusk → …) a
+                      "destination" icon stops being obviously readable at
+                      a glance the way it was for a plain two-way toggle. */}
+                  {isSystemTheme ? (
+                    <SunMoon size={16} color={theme.text} />
+                  ) : themeName === 'dawn' ? (
+                    <Sun size={16} color={theme.text} />
+                  ) : (
+                    <Moon size={16} color={theme.text} />
+                  )}
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={() => navigation.navigate('MyStack')}
                   hitSlop={8}
                 >
-                  <Text style={styles.iconButtonText}>👤</Text>
+                  {profile ? (
+                    <Avatar uri={profile.avatar} label={profile.username} size={30} />
+                  ) : (
+                    <User size={16} color={theme.text} />
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -382,12 +398,15 @@ export default function HomeScreen({ navigation }) {
                 animate={{ opacity: 1, translateY: 0 }}
                 style={styles.importBanner}
               >
-                <Text style={styles.importBannerText}>
-                  {importedTaskCount} task{importedTaskCount === 1 ? '' : 's'} imported from guest
-                  mode ✓
-                </Text>
+                <View style={styles.importBannerTextRow}>
+                  <CheckCircle2 size={14} color={theme.success} />
+                  <Text style={styles.importBannerText}>
+                    {importedTaskCount} task{importedTaskCount === 1 ? '' : 's'} imported from
+                    guest mode
+                  </Text>
+                </View>
                 <TouchableOpacity onPress={clearImportedTaskCount} hitSlop={8}>
-                  <Text style={styles.importBannerDismiss}>✕</Text>
+                  <X size={16} color={theme.success} />
                 </TouchableOpacity>
               </MotiView>
             )}
@@ -398,8 +417,7 @@ export default function HomeScreen({ navigation }) {
 
             {isAuthenticated && (
             <View style={styles.stacksSection}>
-              <Text style={styles.stacksLabel}>Your Stacks</Text>
-              <Text style={styles.stacksTagline}>ur stack, wherever u are</Text>
+              <Text style={styles.stacksLabel}>Your Group Stacks</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -429,7 +447,7 @@ export default function HomeScreen({ navigation }) {
                   onPress={() => navigation.navigate('GroupStacks')}
                 >
                   <View style={styles.stackAddCircle}>
-                    <Text style={styles.stackAddPlus}>+</Text>
+                    <Plus size={22} color={theme.accent} strokeWidth={2.5} />
                   </View>
                   <Text style={styles.stackCardName} numberOfLines={1}>
                     {groupStacks.length > 0 ? 'New' : 'Start one'}
@@ -439,8 +457,9 @@ export default function HomeScreen({ navigation }) {
             </View>
             )}
 
+            {isAuthenticated && <View style={styles.divider} />}
+
             <TaskInput onSubmit={handleAdd} />
-            <QuickAddChips suggestions={suggestions} onPick={handleAdd} />
 
             <View style={styles.listArea}>
               {!loading && (
@@ -456,7 +475,7 @@ export default function HomeScreen({ navigation }) {
                     onDelete={handleDelete}
                     onReorder={handleReorder}
                     {...starProps}
-                    emptyEmoji={doneTasks.length > 0 ? '✨' : '🌤️'}
+                    EmptyIcon={doneTasks.length > 0 ? CheckCircle2 : Sun}
                     emptyTitle={doneTasks.length > 0 ? 'All done for today' : undefined}
                     emptySubtitle={
                       doneTasks.length > 0
@@ -485,7 +504,7 @@ export default function HomeScreen({ navigation }) {
       />
 
       <StatusBar style={theme.statusBarStyle} />
-    </LinearGradient>
+    </GradientBackground>
   );
 }
 
@@ -505,27 +524,21 @@ function makeStyles(theme) {
       justifyContent: 'space-between',
       marginBottom: spacing.lg,
     },
-    header: {
-      ...typography.header,
-      color: theme.text,
-    },
     headerActions: {
       flexDirection: 'row',
-      gap: spacing.sm,
-    },
-    iconButton: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
+      gap: spacing.xs,
       backgroundColor: theme.card,
       borderWidth: 1,
       borderColor: theme.cardBorder,
+      borderRadius: radii.pill,
+      padding: spacing.xs,
+    },
+    iconButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
       alignItems: 'center',
       justifyContent: 'center',
-    },
-    iconButtonText: {
-      fontSize: 15,
-      color: theme.text,
     },
     importBanner: {
       flexDirection: 'row',
@@ -539,17 +552,22 @@ function makeStyles(theme) {
       paddingHorizontal: spacing.md,
       marginBottom: spacing.md,
     },
+    importBannerTextRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      flex: 1,
+    },
     importBannerText: {
       ...typography.small,
       fontWeight: '600',
       color: theme.success,
       flex: 1,
     },
-    importBannerDismiss: {
-      ...typography.small,
-      color: theme.success,
-      fontWeight: '700',
-      marginLeft: spacing.sm,
+    divider: {
+      height: 1,
+      backgroundColor: theme.cardBorder,
+      marginBottom: spacing.lg,
     },
     stacksSection: {
       marginBottom: spacing.lg,
@@ -559,12 +577,6 @@ function makeStyles(theme) {
       color: theme.textMuted,
       letterSpacing: 0.5,
       textTransform: 'uppercase',
-    },
-    stacksTagline: {
-      ...typography.small,
-      fontWeight: '400',
-      color: theme.textMuted,
-      marginTop: 2,
       marginBottom: spacing.sm,
     },
     stacksRow: {
@@ -592,16 +604,24 @@ function makeStyles(theme) {
       justifyContent: 'center',
       backgroundColor: theme.card,
     },
-    stackAddPlus: {
-      fontSize: 22,
-      color: theme.accent,
-      fontWeight: '600',
-    },
     listArea: {
       flex: 1,
+      // Clips a dragged card to the scroll area's bounds — without this,
+      // a card mid-drag (elevated above everything else, unclamped by the
+      // drag library) can render past the top/bottom of the list, over the
+      // header or Dump section, instead of staying inside its own list.
+      overflow: 'hidden',
+      // The negative margin + matching padding cancel out for child layout
+      // (cards end up the same width as before), but they push the actual
+      // clip boundary a few px further out than the cards' own edges — so
+      // a dragging card's highlight border/shadow has room to render
+      // without being clipped by the overflow:hidden above.
+      marginHorizontal: -6,
+      paddingHorizontal: 6,
     },
     scrollContent: {
       flexGrow: 1,
+      paddingTop: spacing.sm,
       paddingBottom: spacing.xl,
     },
   });

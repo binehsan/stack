@@ -2,11 +2,35 @@
    structure (centered brand mark + card) so they read as one family. */
 
 .wrap {
+  position: relative;
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: var(--space-xl) var(--space-md);
+}
+
+.backButton {
+  position: absolute;
+  top: var(--space-lg);
+  left: var(--space-lg);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--color-card);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-pill);
+  padding: 8px 14px 8px 10px;
+  transition: background 150ms ease;
+}
+
+.backButton:hover {
+  background: var(--color-accent-soft);
 }
 
 .inner {
@@ -42,7 +66,12 @@
 
 .title {
   color: var(--color-text);
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+
+.subtitle {
+  margin: 0 0 var(--space-md);
+  line-height: 1.5;
 }
 
 .form {
@@ -72,12 +101,89 @@
   font-weight: 700;
 }
 
+/* "New here?" section — pick-your-path pair below the login card, wider
+   than .inner so the two path cards (and the non-compact GetTheAppCard
+   QR + text) have room to sit side by side instead of cramming into the
+   420px login column. */
+.noAccountSection {
+  width: 100%;
+  max-width: 640px;
+  margin-top: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.noAccountHeading {
+  color: var(--color-text-muted);
+  font-weight: 600;
+  margin: 0 0 var(--space-md);
+  text-align: center;
+}
+
+.pathRow {
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.pathCard {
+  flex: 1 1 260px;
+  min-width: 0;
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.pathIconBadge {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pathTitle {
+  color: var(--color-text);
+  margin: 0;
+}
+
+.pathBody {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.pathButton {
+  width: 100%;
+  margin-top: auto;
+  padding-top: var(--space-xs);
+}
+
+.pathButton > * {
+  width: 100%;
+}
+
 @media (max-width: 480px) {
   .wrap {
     padding: var(--space-lg) var(--space-sm);
   }
 
   .card {
+    padding: var(--space-md);
+  }
+
+  .pathRow {
+    flex-direction: column;
+  }
+
+  .pathCard {
     padding: var(--space-md);
   }
 }

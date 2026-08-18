@@ -1,18 +1,25 @@
+from django.conf import settings
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import permissions, status
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from billing.models import FREE_DEVICE_LIMIT, Device, get_or_create_entitlement
-
-from .models import PushToken
+from .emails import send_branded_email
+from .models import PushToken, WebPushSubscription
 from .serializers import (
     ChangePasswordSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
     ProfileSerializer,
     PushTokenSerializer,
     RegisterSerializer,
+    WebPushSubscriptionSerializer,
 )
 
 
@@ -26,59 +33,23 @@ def _tokens_for(user):
     }
 
 
-def _register_device_or_reject(user, device_id):
-    """Handles the optional `device_id` field login/register accept.
-    Backward compatible: callers only invoke this when `device_id` is
-    present in the request, so older/unmodified clients that never send it
-    skip all device logic entirely.
-
-    - Same device re-logging-in (an already-known device_id for this user)
-      is always fine — just bumps `last_seen_at`.
-    - A genuinely new device_id enforces the free-tier device cap *before*
-      creating the Device row, so a rejected login/register never leaves a
-      half-registered device behind.
-
-    Returns a Response to short-circuit the caller with if the cap blocks
-    the new device, else None to proceed with issuing tokens as normal.
-    """
-    existing = Device.objects.filter(user=user, device_id=device_id).first()
-    if existing:
-        existing.save()  # bumps last_seen_at (auto_now)
-        return None
-
-    entitlement = get_or_create_entitlement(user)
-    if not entitlement.is_pro and Device.objects.filter(user=user).count() >= FREE_DEVICE_LIMIT:
-        return Response(
-            {
-                'detail': 'Free accounts can sync 1 device. Upgrade to Stack Pro for unlimited devices.',
-                'code': 'PAYWALL_DEVICE_LIMIT',
-            },
-            status=status.HTTP_402_PAYMENT_REQUIRED,
-        )
-
-    Device.objects.create(user=user, device_id=device_id)
-    return None
-
-
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
+    # Keyed per-IP by DRF's ScopedRateThrottle (see REST_FRAMEWORK's
+    # DEFAULT_THROTTLE_RATES) — there's no user yet to key on, and per-IP is
+    # exactly what stops a signup-spam/credential-stuffing loop.
+    throttle_scope = 'auth'
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-
-        device_id = request.data.get('device_id')
-        if device_id:
-            rejection = _register_device_or_reject(user, device_id)
-            if rejection is not None:
-                return rejection
-
         return Response(_tokens_for(user), status=status.HTTP_201_CREATED)
 
 
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
+    throttle_scope = 'auth'
 
     def post(self, request):
         email = (request.data.get('email') or '').strip().lower()
@@ -89,12 +60,6 @@ class LoginView(APIView):
                 {'detail': 'Incorrect email or password.'},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
-
-        device_id = request.data.get('device_id')
-        if device_id:
-            rejection = _register_device_or_reject(user, device_id)
-            if rejection is not None:
-                return rejection
 
         return Response(_tokens_for(user))
 
@@ -112,6 +77,72 @@ class ChangePasswordView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         user.set_password(serializer.validated_data['new_password'])
+        user.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PasswordResetRequestView(APIView):
+    """POST /api/auth/password-reset/ — starts a reset. Always returns the
+    same generic response whether or not the email is registered; a
+    response that varied would let anyone use this endpoint to check which
+    emails have accounts."""
+
+    permission_classes = [permissions.AllowAny]
+    throttle_scope = 'auth'
+
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email'].strip().lower()
+
+        # email doubles as username (see RegisterSerializer) — same lookup
+        # LoginView uses via authenticate(username=email, ...).
+        user = User.objects.filter(username=email).first()
+        if user is not None:
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+            reset_url = f'{settings.FRONTEND_URL}/reset-password?uid={uid}&token={token}'
+            send_branded_email(
+                user.email,
+                'Reset your Stack password',
+                'emails/password_reset.html',
+                {'reset_url': reset_url, 'username': user.profile.username},
+            )
+
+        return Response({'detail': 'If that email has an account, a reset link is on its way.'})
+
+
+class PasswordResetConfirmView(APIView):
+    """POST /api/auth/password-reset-confirm/ — the link from that email
+    lands on the website's /reset-password page, which posts uid+token+new
+    password here. default_token_generator (Django's own, also used by the
+    built-in admin password reset) ties the token to the user's current
+    password hash and last_login, so it stops working the moment it's used
+    once or the password changes any other way — no separate "used" flag
+    needed. Tokens expire after PASSWORD_RESET_TIMEOUT (Django default: 3
+    days), matching what the email tells the recipient.
+    """
+
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        try:
+            uid = force_str(urlsafe_base64_decode(data['uid']))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+
+        if user is None or not default_token_generator.check_token(user, data['token']):
+            return Response(
+                {'detail': 'This reset link is invalid or has expired.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.set_password(data['new_password'])
         user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -153,4 +184,45 @@ class RegisterPushTokenView(APIView):
         serializer.is_valid(raise_exception=True)
         token = serializer.validated_data['token']
         PushToken.objects.update_or_create(token=token, defaults={'user': request.user})
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class RegisterWebPushSubscriptionView(APIView):
+    """Registers (or re-owns) the PWA's Web Push subscription for the
+    caller's browser — the web equivalent of RegisterPushTokenView above.
+    Accepts the browser's PushSubscription.toJSON() shape directly
+    (`{endpoint, keys: {p256dh, auth}}`) so the frontend doesn't need to
+    reshape it before posting. Upsert on `endpoint`, same reasoning as
+    PushToken's upsert on `token`."""
+
+    def post(self, request):
+        keys = request.data.get('keys') or {}
+        serializer = WebPushSubscriptionSerializer(
+            data={
+                'endpoint': request.data.get('endpoint'),
+                'p256dh': keys.get('p256dh'),
+                'auth': keys.get('auth'),
+            }
+        )
+        serializer.is_valid(raise_exception=True)
+        WebPushSubscription.objects.update_or_create(
+            endpoint=serializer.validated_data['endpoint'],
+            defaults={
+                'user': request.user,
+                'p256dh': serializer.validated_data['p256dh'],
+                'auth': serializer.validated_data['auth'],
+            },
+        )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UnregisterWebPushSubscriptionView(APIView):
+    """Removes a Web Push subscription — called when the caller turns
+    notifications off in Settings. Silently no-ops on an unknown endpoint
+    (already gone is the same end state as successfully removed)."""
+
+    def post(self, request):
+        endpoint = request.data.get('endpoint')
+        if endpoint:
+            WebPushSubscription.objects.filter(endpoint=endpoint, user=request.user).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

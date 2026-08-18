@@ -61,11 +61,7 @@ export default function GroupStacks() {
       setCreateName('');
       navigate(`/stacks/${stack.id}`);
     } catch (err) {
-      if (err.code === 'PAYWALL_GROUP_LIMIT') {
-        setCreateError("You've reached the free plan's group stack limit.");
-      } else {
-        setCreateError(err.message || 'Something went wrong — try again.');
-      }
+      setCreateError(err.message || 'Something went wrong, try again.');
     } finally {
       setCreating(false);
     }
@@ -174,7 +170,7 @@ export default function GroupStacks() {
               <Users size={40} strokeWidth={1.5} className={styles.emptyIcon} />
               <p className={`text-body-strong ${styles.emptyTitle}`}>No group stacks yet</p>
               <p className={`text-small ${styles.emptySubtitle}`}>
-                Create one to share a task list with family, friends, roommates — anyone. Everyone
+                Create one to share a task list with family, friends, roommates, anyone. Everyone
                 can add items and see who's on the hook.
               </p>
             </div>

@@ -7,28 +7,31 @@ accurate as of when this was written; third-party dashboards do reshuffle
 occasionally, so if a label doesn't match exactly, look for the nearest
 equivalent (e.g. "Settings" vs "Project Settings").
 
+**Decision (2026-08-18): Stack is entirely free — no paid tier, no ads, no
+IAP, on the app, the website, or ever (unless the app grows into a real
+business later, at which point it'd get its own LLC + fresh developer
+accounts rather than retrofitting these). Both the RevenueCat mobile IAP
+flow and the website's Stripe subscription have been fully removed from the
+codebase, not just disabled. Published as an **Individual** account on both
+the App Store and Google Play — free = non-trader = no forced public address
+disclosure under Apple's EU DSA rule or Google's merchant-account trigger.**
+
 ## Where things stand right now
 
 - **Backend**: Django + DRF, SQLite, running locally on your LAN only
   (`0.0.0.0:8000`) — not reachable from the internet yet. Full test suite
-  across all four apps (`accounts`, `tasks`, `family`, `billing`) —
-  **102/102 tests passing** (`python manage.py test` from `backend/`).
+  across the three apps (`accounts`, `tasks`, `family`) — run
+  `python manage.py test` from `backend/` to confirm it's green.
 - **Frontend**: Expo/React Native, off Expo Go and onto a real EAS
   dev-client build (Stage 1 done). Push notifications wired and tested
-  two-device (Stage 2 done). This session added: a Pro-gated theme picker
-  (Classic/Premium Purple/Forest Green/Alpine Blue, each with light+dark),
-  a fix so `Entitlement` changes in Django admin actually reach the app,
-  the dashboard header showing your real avatar, tapping a group-invite
-  push opens an accept/decline popup, tapping a nudge push opens that group
-  stack directly, voice input auto-submits when it finishes listening, and
-  a few UI polish fixes (login screen's empty circle, dashboard tagline).
-  None of this has been tested on a rebuilt device binary yet — see
-  **Stage 2.5** below before spending anything in Stage 3.
+  two-device (Stage 2 done). Four free theme families (Classic/Purple/
+  Forest Green/Alpine Blue), voice input via on-device speech-to-text, no
+  gating on any of it.
 - **App icon**: done. **Notification icon**: fixed in code, needs the next
   `eas build` to actually take effect (native asset — JS reload isn't enough).
-- **Not yet done**: RevenueCat account, Google Play Console account, Apple
-  Developer Program enrollment, backend deployed anywhere reachable from the
-  internet, any store listing, any legal pages.
+- **Not yet done**: Google Play Console account, Apple Developer Program
+  enrollment, backend deployed anywhere reachable from the internet, any
+  store listing, any legal pages.
 
 ---
 
@@ -48,17 +51,17 @@ already existed.
 - [ ] Register a new account, log out, log back in
 - [ ] Add a task, star it (appears in Focus), complete it (moves to Dump), delete one
 - [ ] Create a group stack, and from `MyStackScreen` confirm your avatar/username save
-- [ ] No crashes when you tap the mic button or the "Upgrade to Pro" row — they should show a graceful "coming soon"-style fallback, not an error, since the native modules aren't built in yet
+- [ ] Voice input shows a graceful "coming soon"-style fallback (not an error) if the native module isn't built in yet
 
 ---
 
 ## Stage 1 — EAS account + first dev-client build
 
-Push notifications, RevenueCat, and voice input are all **native modules**
-— none of them work in Expo Go, no matter what. This stage gets you off
-Expo Go and onto a real installable build, with nothing else changed yet,
-so you can isolate "did the rebuild break something" from "did the new
-feature break something" in later stages.
+Push notifications and voice input are both **native modules** — neither
+works in Expo Go, no matter what. This stage gets you off Expo Go and onto
+a real installable build, with nothing else changed yet, so you can isolate
+"did the rebuild break something" from "did the new feature break
+something" in later stages.
 
 1. Go to **expo.dev** → sign up / log in (free)
 2. From `frontend/`, this repo is already linked to a project (`app.json`'s
@@ -103,136 +106,61 @@ helping) — a push can't be observed on the same device that triggers it.
 
 ---
 
-## Stage 2.5 — Regression pass on this session's changes
+## Stage 2.5 — Regression pass
 
-Stage 3 costs real money (Play Console's $25) and commits you to specific
-product ids everywhere — worth confirming today's batch of frontend changes
-actually works on-device first, all doable right now with zero new accounts.
+Worth confirming the app actually works on-device before spending anything
+on store accounts — all doable right now with zero new accounts.
 
-1. Backend: from `backend/`, run `python manage.py test` → expect
-   `Ran 102 tests ... OK`
-2. Grant yourself Stack Pro without RevenueCat: `http://localhost:8000/admin/`
-   (or your LAN IP from a phone) → log in → **Billing → Entitlements** →
-   find your user (or **Add entitlement**) → check **Is lifetime** → Save
-3. In the app, open `MyStackScreen` — confirm it now shows "Stack Pro —
-   Lifetime" **without needing to background/foreground the app** (this is
-   the bug that got fixed — it used to silently never refetch)
-
-### Test before moving on
-- [ ] **Theme picker**: `MyStackScreen` → Theme section → tap through all 4
-  swatches (Classic/Premium Purple/Forest Green/Alpine Blue), and toggle
-  light/dark (the sun/moon button) on each — 8 combinations total. Check
-  every screen's text stays readable, and the Logo's white ring is still
-  visible against the gradient in each
-- [ ] Uncheck **Is lifetime** in admin, reopen `MyStackScreen` → confirms
-  the theme silently falls back to Classic (not stuck on a paid theme
-  you're no longer entitled to)
-- [ ] **Voice input**: re-check **Is lifetime**, tap the mic, speak a short
-  task → confirms it live-transcribes AND auto-adds itself once you stop
-  talking, with no need to tap +. Tap mic and stay silent → confirms
-  nothing gets wrongly auto-submitted
-- [ ] **Dashboard avatar**: header button (top-right) shows your real
-  profile photo, not the generic person icon (guests should still see the
-  generic icon, since they have no avatar)
-- [ ] **Group-invite popup**: from Device A, invite Device B to a group
-  stack → on Device B, tap the push notification (not just open the app) →
-  confirms an Accept/Decline popup appears immediately, and Accept lands
-  you inside that stack
-- [ ] **Nudge navigation**: Device A nudges a task onto Device B → tap that
-  push notification on Device B → confirms it opens straight into the
-  correct group stack
-- [ ] **Leave-stack refresh**: from inside a group stack, tap "Leave this
-  stack" → confirms the hub list updates immediately, no back-and-reopen needed
-- [ ] Login/Register screens: confirm there's no empty circle in the
-  top-left when there's nothing to go back to
-- [ ] Dashboard: confirm the "Your stack, wherever u are" tagline under
-  Group Stacks is gone
+1. Backend: from `backend/`, run `python manage.py test` → expect all green
+2. **Theme picker**: `MyStackScreen` → Theme section → tap through all 4
+   swatches (Classic/Purple/Forest Green/Alpine Blue), and toggle
+   light/dark (the sun/moon button) on each — 8 combinations total. Check
+   every screen's text stays readable, and the Logo's white ring is still
+   visible against the gradient in each
+3. **Voice input**: tap the mic, speak a short task → confirms it
+   live-transcribes AND auto-adds itself once you stop talking, with no
+   need to tap +. Tap mic and stay silent → confirms nothing gets wrongly
+   auto-submitted
+4. **Group-invite popup**: from Device A, invite Device B to a group
+   stack → on Device B, tap the push notification (not just open the app) →
+   confirms an Accept/Decline popup appears immediately, and Accept lands
+   you inside that stack
+5. **Nudge navigation**: Device A nudges a task onto Device B → tap that
+   push notification on Device B → confirms it opens straight into the
+   correct group stack
+6. **Leave-stack refresh**: from inside a group stack, tap "Leave this
+   stack" → confirms the hub list updates immediately, no back-and-reopen needed
+7. Confirm a 21st member invite to one group stack is rejected with the
+   "group is full" message (`GROUP_MEMBER_CAP`) — the only cap left
+   anywhere, unrelated to accounts/payment (see backend README)
 
 ---
 
-## Stage 3 — RevenueCat + Google Play Console (Android purchases)
+## Stage 3 — Google Play Console (Android)
 
-This is the biggest stage — do the sub-steps in this exact order, since
-RevenueCat's Android product entries need real Play Console identifiers to
-point at, which don't exist until you've created them.
-
-### 3a. RevenueCat — account, project, entitlement (no dependency, do first)
-
-1. **app.revenuecat.com** → sign up (free) → **Create new project** → name it "Stack"
-2. Left sidebar → **Apps** → **+ Add app** → choose **Google Play** →
-   package name `com.stack.app` (matches `frontend/app.json`)
-3. Left sidebar → **Entitlements** → **+ New** → identifier **`pro`**
-   (exact string — the app code checks for this) → Save
-
-### 3b. Google Play Console — pay, create app, create products
-
-4. **play.google.com/console** → pay the **$25 one-time registration fee**
-   → complete account setup
-5. **Create app** → name "Stack" → fill in the required defaults (app or
-   game: App; free or paid: Free; declarations) → Create
-6. Inside the app → **Monetize → Products → Subscriptions** → **Create subscription**
-   - Product ID: `stack_pro_monthly`
-   - It'll prompt you to add a **base plan** immediately — click **Add base plan**
-     - Base plan ID: `monthly` (lowercase/numbers/hyphens only — a separate id from the product id, Play requires one per subscription)
-     - Billing period: Monthly
-     - Set price: $2.99 (or let Play auto-convert other currencies from this)
-     - Activate the base plan
-7. **Create subscription** again:
-   - Product ID: `stack_pro_annual`, base plan ID `annual`, billing period Yearly, price $19.99, activate
-8. **Monetize → Products → In-app products** → **Create product**
-   - Product ID: `stack_pro_lifetime`, price $14.99, status Active
-
-### 3c. Back to RevenueCat — products, attach entitlement, offering
-
-9. RevenueCat → **Products** → **+ New**, for each of the 3, using the Android identifier form `product-id:base-plan-id` for the two subscriptions, and plain id for lifetime:
-   - `stack_pro_monthly:monthly`
-   - `stack_pro_annual:annual`
-   - `stack_pro_lifetime`
-10. On each product's detail page, attach it to the `pro` entitlement
-11. **Offerings** → **+ New** → identifier **`default`** → inside it, **+ New Package** for each of the 3 products → mark this offering **Current**
-
-### 3d. Link Play Console ↔ RevenueCat
-
-12. RevenueCat → **Project Settings → Integrations → Google Play** → follow
-    the guided flow — it asks for a Play **service account** JSON key
-    (Play Console → **Users and permissions** → create a service account
-    via the linked Google Cloud Console, grant it **Finance** viewer
-    access, download the key, upload it to RevenueCat)
-
-### 3e. Wire the API key into the app
-
-13. RevenueCat → **API Keys** (under your Android app) → copy the **Public** key
-14. Open `frontend/app.json` → replace `extra.revenueCat.androidApiKey`'s
-    `"REPLACE_WITH_REVENUECAT_ANDROID_KEY"` with the copied key (these
-    public SDK keys are safe to commit — not secrets, same as the
-    `eas.projectId` already sitting in this file)
-15. No native rebuild needed for this — it's read at runtime — just reload the app (shake device → Reload, or restart Metro)
+1. **play.google.com/console** → pay the **$25 one-time registration fee**
+   → complete account setup **as an Individual account** (not Organization
+   — see the address-disclosure reasoning at the top of this doc)
+2. **Create app** → name "Stack" → fill in the required defaults (app or
+   game: App; free or paid: **Free**; declarations) → Create
+3. **Release → Testing → Internal testing** → create a release, add
+   yourself + a few testers → this is where you'll do real-device QA before
+   any public release
 
 ### Test before moving on
-
-15. Play Console → **Testing → License testing** → add your own Google
-    account's email as a license tester (lets you "buy" without being
-    charged real money)
-
-- [ ] As a free-tier account: try founding a 2nd group stack → paywall shows (`PAYWALL_GROUP_LIMIT`)
-- [ ] As a free-tier account: log in on a 2nd device → paywall shows (`PAYWALL_DEVICE_LIMIT`)
-- [ ] As a free-tier account: tap the mic in task input → paywall shows (`PAYWALL_VOICE`)
-- [ ] Buy `stack_pro_monthly` via the in-app paywall (sandbox, no real charge as a license tester) → `MyStackScreen` flips to Pro without restarting the app
-- [ ] Repeat purchase test for `stack_pro_annual` and `stack_pro_lifetime` (you may need to cancel/refund the previous sandbox purchase between tests via Play Console's order management)
-- [ ] As the now-Pro account: found a 2nd group, log in on a 2nd device, use voice input — none should be gated
-- [ ] Settings → **Restore Purchases** on a fresh install of the same account → Pro status comes back without a new purchase
-- [ ] Confirm a 21st member invite to one group stack is rejected with the "group is full" message (`GROUP_MEMBER_CAP`) — this applies to every group regardless of tier, so test it on the free account
+- [ ] Install the app via the internal testing link on a real device (not just the dev-client build)
+- [ ] Full regression pass: register, login, tasks, group stacks, push, theme picker, voice input — nothing behind a lock or upsell anywhere
 
 ---
 
 ## Stage 4 — Deploy the backend for real
 
-RevenueCat's webhook and real users' phones need to reach your backend over
-the public internet — your LAN IP doesn't work once you're off your own
-Wi-Fi. **Decision made**: self-host on your existing VPS (6 vCores/8GB/240GB
-NVMe, currently running a college library app) rather than a PaaS —
-massively more headroom than this workload needs, and $0 marginal cost.
-Commands below assume Ubuntu/Debian (`apt`); adjust for your actual distro.
+Real users' phones need to reach your backend over the public internet —
+your LAN IP doesn't work once you're off your own Wi-Fi. **Decision made**:
+self-host on your existing VPS (6 vCores/8GB/240GB NVMe, currently running a
+college library app) rather than a PaaS — massively more headroom than this
+workload needs, and $0 marginal cost. Commands below assume Ubuntu/Debian
+(`apt`); adjust for your actual distro.
 
 ### 4a. Reality-check current headroom before adding anything
 
@@ -283,8 +211,7 @@ Commands below assume Ubuntu/Debian (`apt`); adjust for your actual distro.
 9. `python -m venv venv && source venv/bin/activate && pip install -r backend/requirements.txt`
 10. Create `/srv/stack/backend/.env` (not committed to git) with
     `SECRET_KEY`, `DEBUG=False`, `ALLOWED_HOSTS=stack.yourdomain.com`,
-    `DATABASE_URL=postgres://stack_user:yourpassword@localhost/stack_db`,
-    `REVENUECAT_WEBHOOK_SECRET=<make up a long random string>`
+    `DATABASE_URL=postgres://stack_user:yourpassword@localhost/stack_db`
 11. `python manage.py migrate`
 12. `python manage.py createsuperuser` (a fresh prod admin account — don't reuse a dev password)
 13. `python manage.py collectstatic --noinput`
@@ -346,22 +273,18 @@ Commands below assume Ubuntu/Debian (`apt`); adjust for your actual distro.
 21. `sudo nginx -t` (config check) → `sudo systemctl reload nginx`
 22. `sudo certbot --nginx -d stack.yourdomain.com` → free HTTPS, auto-configures the redirect and renewal timer
 
-### 4h. Point the app and RevenueCat at the real domain
+### 4h. Point the app at the real domain
 
 23. `frontend/src/api/config.js` needs a real conditional now (LAN IP for
     local dev, `https://stack.yourdomain.com/api` for anything you hand to
     a tester or ship) — flag this to me, real code change
-24. RevenueCat → **Project Settings → Integrations → Webhooks** → **+ Add**
-    - URL: `https://stack.yourdomain.com/api/billing/revenuecat-webhook/`
-    - Authorization header value: the same string as `REVENUECAT_WEBHOOK_SECRET` in your `.env`
 
 ### 4i. Back up Postgres — a PaaS would do this for you, self-hosting doesn't
 
-25. Once RevenueCat is live, this database holds real payment-linked
-    entitlement records — back it up off the VPS, not just on it (a single
-    box failing would otherwise lose everything). Simplest version, a daily
-    cron dumping to your own storage of choice (S3/R2/Backblaze via `rclone`,
-    or even scp to a second machine):
+24. Back it up off the VPS, not just on it (a single box failing would
+    otherwise lose everything). Simplest version, a daily cron dumping to
+    your own storage of choice (S3/R2/Backblaze via `rclone`, or even scp
+    to a second machine):
     ```bash
     # /etc/cron.daily/stack-db-backup
     #!/bin/bash
@@ -372,12 +295,11 @@ Commands below assume Ubuntu/Debian (`apt`); adjust for your actual distro.
     (`sudo chmod +x /etc/cron.daily/stack-db-backup`; set up `rclone config` once first)
 
 ### Test before moving on
-- [ ] `python manage.py test` from `backend/` (against the prod `.env` settings this time) still passes 102/102
-- [ ] `curl -I https://stack.yourdomain.com/api/billing/entitlement/` → expect `401`, not a connection error or 500 — confirms Nginx→gunicorn→Django is actually wired end to end
+- [ ] `python manage.py test` from `backend/` (against the prod `.env` settings this time) still passes fully
+- [ ] `curl -I https://stack.yourdomain.com/api/auth/login/` → expect `405` (POST-only, not a connection error or 500) — confirms Nginx→gunicorn→Django is actually wired end to end
 - [ ] `sudo systemctl status stack.service` shows `active`, and `sudo journalctl -u stack.service -f` shows no errors while you hit a few endpoints
 - [ ] Confirm the college app is completely unaffected — check it still responds normally after Stack goes live alongside it
-- [ ] RevenueCat → **Webhooks** page → **Send test event** → confirm `200`, and check `journalctl -u stack.service` for the request landing
-- [ ] Full regression pass against the deployed backend instead of your LAN one: register, login, tasks, group stacks, push, and one real sandbox purchase — confirm `is_pro` flips via the live webhook this time, not just locally
+- [ ] Full regression pass against the deployed backend instead of your LAN one: register, login, tasks, group stacks, push
 - [ ] Confirm a manual `pg_dump` + the cron job both actually produce a file, and that file actually lands in off-box storage
 
 ---
@@ -385,21 +307,18 @@ Commands below assume Ubuntu/Debian (`apt`); adjust for your actual distro.
 ## Stage 5 — Apple Developer + iOS (mirrors Stages 1–3)
 
 Requires the **$99/year Apple Developer Program** and a Mac for the actual
-Xcode-side credential work (EAS handles most of this from any OS, but
-some Apple flows are Mac/Safari-only).
+Xcode-side credential work (EAS handles most of this from any OS, but some
+Apple flows are Mac/Safari-only). Enroll as an **Individual** account, same
+reasoning as Play Console above.
 
 1. **developer.apple.com/programs** → enroll ($99/yr)
-2. **appstoreconnect.apple.com** → **My Apps → +** → New App → bundle id `com.stack.app` (must match `frontend/app.json`'s `ios.bundleIdentifier`)
+2. **appstoreconnect.apple.com** → **My Apps → +** → New App → bundle id `com.stack.app` (must match `frontend/app.json`'s `ios.bundleIdentifier`), pricing: Free
 3. From `frontend/`: `eas credentials` → **iOS** → **Push Notifications** → let it generate/upload APNs credentials
-4. App Store Connect → your app → **Subscriptions** → create a Subscription Group → add `stack_pro_monthly` and `stack_pro_annual` inside it with matching prices; separately under **In-App Purchases** create `stack_pro_lifetime` as a Non-Consumable
-5. RevenueCat → **Apps → + Add app** → App Store → same bundle id → generate/copy the iOS **Public** API key → paste into `frontend/app.json`'s `iosApiKey`
-6. RevenueCat → **Project Settings → Integrations → App Store Connect** → link via an App Store Connect API key (App Store Connect → **Users and Access → Integrations → App Store Connect API** → generate a key with **Admin** or **App Manager** role, download the `.p8`, upload to RevenueCat)
-7. `npx eas-cli build --profile development --platform ios` → install via TestFlight or an ad-hoc build on a physical iPhone (simulators can't complete real purchases)
+4. `npx eas-cli build --profile development --platform ios` → install via TestFlight or an ad-hoc build on a physical iPhone
 
 ### Test before moving on
 - [ ] Repeat Stage 2's two-device push test on iOS
-- [ ] App Store Connect → **Users and Access → Sandbox Testers** → create a sandbox Apple ID, sign into it on-device (Settings → App Store → Sandbox Account), repeat Stage 3's full purchase/restore/gating test suite on iOS
-- [ ] Cross-platform check: buy Pro on Android with one account, confirm the same account shows Pro when logged into the iOS build (this is what makes the backend the source of truth, not RevenueCat's per-store state)
+- [ ] Full regression pass on a real iPhone — nothing behind a lock anywhere
 
 ---
 
@@ -407,13 +326,13 @@ some Apple flows are Mac/Safari-only).
 
 1. **Privacy Policy + Terms of Service**: both stores require a hosted
    URL before submission — this app collects accounts, avatars, push
-   tokens, device ids, and microphone use (even though voice audio never
-   leaves the device — the policy still needs to disclose the mic
-   permission). A single static page hosted anywhere public (a GitHub
-   Pages page, or a route on your own backend domain) is enough to start.
+   tokens, and microphone use (even though voice audio never leaves the
+   device — the policy still needs to disclose the mic permission). A
+   single static page hosted anywhere public (a GitHub Pages page, or a
+   route on your own backend domain) is enough to start.
 2. **Play Console**:
    - **Grow → Store presence → Main store listing** — title, short/full description, screenshots (phone + optionally tablet), feature graphic
-   - **Policy → App content → Data safety** — accurately declare: account data (email), photos (avatars), microphone (voice input — used on-device, not transmitted), device/push identifiers
+   - **Policy → App content → Data safety** — accurately declare: account data (email), photos (avatars), microphone (voice input — used on-device, not transmitted)
    - **Policy → App content → Content rating** — fill out the questionnaire
    - **Release → Testing → Internal testing** → create a release, add testers → promote to **Closed testing** once stable → **Production** last
 3. **App Store Connect**:
@@ -421,7 +340,6 @@ some Apple flows are Mac/Safari-only).
    - **App Privacy** — same categories as Play's Data Safety form
    - Submit for review
    - Note: Apple's "Sign in with Apple" requirement only triggers if you offer *other* third-party/social logins — Stack is email/password only, so this doesn't apply
-   - Apple reviews subscription apps closely for clear pricing disclosure and a working Restore Purchases — both are already in the paywall UI
 4. Before flipping either to Production: have at least one or two people who aren't you install via TestFlight / Play's testing track and run the whole flow cold
 
 ---
@@ -430,8 +348,7 @@ some Apple flows are Mac/Safari-only).
 
 - **Store listing (ASO)**: a clear, keyword-relevant title/subtitle ("Stack — Daily Task Dump" type framing), a short demo video/preview showing add-task speed and the calm design, screenshots of the real UI, not marketing fluff
 - **Launch channels**: Product Hunt, r/productivity / r/androidapps / r/ios (read each subreddit's self-promotion rules first), Indie Hackers, build-in-public posts during development are worth more than a single launch-day post
-- **Pricing**: consider a free trial on the monthly/annual plans via RevenueCat's offering config (dashboard-only, no code change — **Offerings → default → edit package → Introductory Offer**) — free trials meaningfully lift conversion for indie subscription apps
-- **Analytics**: nothing is wired up yet — consider a lightweight product analytics tool (PostHog has a generous free tier) if you want to see where free users drop off before hitting a paywall
+- **Analytics**: nothing is wired up yet — consider a lightweight product analytics tool (PostHog has a generous free tier) if you want to see where users drop off
 - **Feedback loop**: keep an open Play testing track / TestFlight public link running post-launch as the cheapest way to catch bugs before they hit your full user base
 
 ---
@@ -442,13 +359,11 @@ some Apple flows are Mac/Safari-only).
 |---|---|
 | Google Play Console | $25 one-time |
 | Apple Developer Program | $99/year |
-| RevenueCat | Free under $2,500/mo tracked revenue, 1% above |
 | EAS builds | Free tier to start; ~$29/mo if you outgrow it |
 | Backend hosting | $0 marginal — self-hosted on your existing VPS |
-| Store commission | 15% under $1M/year revenue on both stores |
 
 ---
 
 ## Linear order, one line each
 
-0. Confirm baseline (Expo Go) → 1. EAS dev-client build → 2. Firebase/Android push → **2.5. Regression pass on this session's changes** → 3. RevenueCat + Play Console (Android purchases) → 4. Deploy backend for real (self-hosted VPS) → 5. Apple Developer + iOS (repeat 1–3 for iOS) → 6. Store submission (both platforms) → 7. Marketing, ideally starting *before* full public launch
+0. Confirm baseline (Expo Go) → 1. EAS dev-client build → 2. Firebase/Android push → **2.5. Regression pass** → 3. Google Play Console (Android) → 4. Deploy backend for real (self-hosted VPS) → 5. Apple Developer + iOS (repeat 1–3 for iOS) → 6. Store submission (both platforms) → 7. Marketing, ideally starting *before* full public launch

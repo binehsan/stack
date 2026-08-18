@@ -1,0 +1,61 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.compact {
+  gap: var(--space-sm);
+}
+
+/* The QR tile has a fixed pixel width (flex-shrink: 0, by design, a QR
+   code below a certain size stops being reliably scannable) — on a narrow
+   container that fixed width plus even a shrunk text column can exceed the
+   available space. Stacking the text below the QR code instead of beside
+   it removes that width requirement entirely below this breakpoint. */
+@media (max-width: 420px) {
+  .wrap {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.qrTile {
+  flex-shrink: 0;
+  background: #FFFFFF;
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.textCol {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.link {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.link:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}

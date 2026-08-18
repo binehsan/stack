@@ -15,7 +15,7 @@ export default function MarketingFooter() {
             <Logo size={28} />
             <span className={styles.brandName}>Stack</span>
           </Link>
-          <p className={styles.tagline}>Your stack, wherever u are.</p>
+          <p className={styles.tagline}>&ldquo;Your stack, wherever u are.&rdquo;</p>
         </div>
 
         <nav className={styles.links}>

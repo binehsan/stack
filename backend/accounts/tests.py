@@ -1,6 +1,7 @@
 from io import BytesIO
 
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
 from rest_framework import status
@@ -25,6 +26,17 @@ def make_test_image(name='avatar.png'):
 
 
 class RegisterTests(APITestCase):
+    # accounts/views.py's throttle_scope = 'auth' rate-limits this endpoint
+    # per-IP — DRF's throttle "request history" lives in Django's cache, not
+    # the database, so it isn't reset by APITestCase's usual per-test
+    # transaction rollback. Every call in this class shares the test
+    # client's one IP, so without clearing the cache between tests, this
+    # class's own request volume would eventually trip the same 10/min
+    # limit real abuse is supposed to hit — not a bug in the throttle,
+    # just the test suite needing its own clean slate each time.
+    def setUp(self):
+        cache.clear()
+
     def test_register_with_default_username(self):
         response = self.client.post(
             '/api/auth/register/',
@@ -110,6 +122,10 @@ class RegisterTests(APITestCase):
 
 
 class LoginTests(APITestCase):
+    # See RegisterTests.setUp's comment — same reasoning, same fix.
+    def setUp(self):
+        cache.clear()
+
     def test_correct_credentials_succeed(self):
         make_user('login@example.com')
         response = self.client.post(
@@ -137,6 +153,18 @@ class LoginTests(APITestCase):
             '/api/auth/login/', {'email': 'ghost@example.com', 'password': 'testpass123'}
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_repeated_attempts_are_rate_limited(self):
+        # Matches REST_FRAMEWORK's DEFAULT_THROTTLE_RATES['auth'] = '10/min'
+        # (settings.py) — the 11th request from the same IP inside a minute
+        # should be rejected before it even reaches LoginView's own logic,
+        # regardless of whether the credentials on that 11th attempt were
+        # correct. This is the actual behavior Day 3's "no rate limiting on
+        # auth endpoints" gap was about.
+        for _ in range(10):
+            self.client.post('/api/auth/login/', {'email': 'ghost@example.com', 'password': 'x'})
+        response = self.client.post('/api/auth/login/', {'email': 'ghost@example.com', 'password': 'x'})
+        self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
 
 
 class ChangePasswordTests(APITestCase):

@@ -3,3 +3,10 @@ djangorestframework==3.18.0
 django-cors-headers==4.9.0
 djangorestframework-simplejwt==5.5.1
 Pillow==12.3.0
+pywebpush==2.0.3
+sentry-sdk==2.68.0
+python-dotenv==1.1.0
+gunicorn==23.0.0
+# [binary] bundles libpq itself — no system postgres-dev packages needed in
+# the Docker image or on your machine to install this.
+psycopg[binary]==3.2.10

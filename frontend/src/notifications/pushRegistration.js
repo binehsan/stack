@@ -4,12 +4,20 @@ import { Platform } from 'react-native';
 
 import { registerPushToken } from '../api/notifications';
 
-// Called the first time a user creates/joins a group stack — not on app
+// Called whenever a user creates/joins/opens a group stack — not on app
 // launch, since asking for notification permission before the user has any
 // reason to want one tanks opt-in rates. Silently no-ops on any failure (no
 // device support, permission denied, no EAS project linked yet) since push
 // is a nice-to-have that should never block the group-stack flow that
 // triggered this.
+//
+// Two environment gotchas if a nudge push silently never shows up, neither
+// of which this function can detect or work around:
+//  - Expo Go (SDK 53+) can no longer receive remote push at all — this only
+//    works in a custom dev-client/standalone build (see eas.json).
+//  - Android additionally needs a Firebase project's FCM credentials
+//    uploaded via `eas credentials` — without it, getExpoPushTokenAsync
+//    fails below and this catches it silently, same as any other failure.
 export async function registerForPushNotificationsAsync() {
   try {
     if (Platform.OS === 'android') {

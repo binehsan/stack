@@ -1,5 +1,6 @@
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MotiView } from 'moti';
+import { Sparkles } from 'lucide-react-native';
 
 import { useTheme } from '../context/ThemeContext';
 import { radii, spacing, typography } from '../theme';
@@ -36,14 +37,14 @@ export default function RecapModal({ visible, recap, onClose }) {
         >
           {celebrate && (
             <View style={styles.sparkleRow} pointerEvents="none">
-              {['✨', '✨', '✨'].map((glyph, i) => (
+              {[0, 1, 2].map((i) => (
                 <MotiView
                   key={i}
                   from={{ opacity: 0, translateY: 6, scale: 0.5 }}
                   animate={{ opacity: 1, translateY: 0, scale: 1 }}
                   transition={{ type: 'timing', duration: 320, delay: i * 90 }}
                 >
-                  <Text style={styles.sparkle}>{glyph}</Text>
+                  <Sparkles size={20} color={theme.accent} fill={theme.accent} />
                 </MotiView>
               ))}
             </View>
@@ -94,10 +95,6 @@ function makeStyles(theme) {
       gap: spacing.md,
       marginBottom: spacing.sm,
     },
-    sparkle: {
-      fontSize: 20,
-      color: theme.accent,
-    },
     eyebrow: {
       ...typography.tiny,
       color: theme.textMuted,
@@ -130,7 +127,7 @@ function makeStyles(theme) {
     },
     buttonText: {
       ...typography.small,
-      color: '#fff',
+      color: theme.onAccent,
       fontWeight: '700',
     },
   });

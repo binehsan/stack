@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -9,10 +9,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { useFocusEffect } from '@react-navigation/native';
+import { ChevronLeft, ChevronRight, Users } from 'lucide-react-native';
 
+import GradientBackground from '../components/GradientBackground';
 import Avatar from '../components/Avatar';
 import AuthTextField from '../components/AuthTextField';
 import PrimaryButton from '../components/PrimaryButton';
@@ -58,9 +60,18 @@ export default function GroupStacksScreen({ navigation }) {
     }
   }, []);
 
-  useEffect(() => {
-    loadAll();
-  }, [loadAll]);
+  // Focus, not mount-only: leaving a stack (from GroupStackDetailScreen)
+  // calls navigation.goBack() straight back here without ever remounting
+  // this screen, so a plain useEffect(..., []) would keep showing the
+  // now-stale list until the user backed all the way out and reopened it.
+  // Refetching on every focus (same pattern as HomeScreen's task refresh)
+  // means the left/joined/created stack is correct the instant this screen
+  // is back on top.
+  useFocusEffect(
+    useCallback(() => {
+      loadAll();
+    }, [loadAll])
+  );
 
   async function handleCreate() {
     const name = createName.trim();
@@ -105,12 +116,7 @@ export default function GroupStacksScreen({ navigation }) {
   }
 
   return (
-    <LinearGradient
-      colors={theme.gradient}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.flex}
-    >
+    <GradientBackground style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
         <View style={styles.headerRow}>
           <TouchableOpacity
@@ -118,7 +124,7 @@ export default function GroupStacksScreen({ navigation }) {
             onPress={() => navigation.goBack()}
             hitSlop={8}
           >
-            <Text style={styles.backText}>‹</Text>
+            <ChevronLeft size={22} color={theme.text} />
           </TouchableOpacity>
           <Text style={styles.title}>Group Stacks</Text>
           <View style={styles.backButton} />
@@ -137,7 +143,7 @@ export default function GroupStacksScreen({ navigation }) {
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.tagline}>ur stack, wherever u are</Text>
+              <Text style={styles.tagline}>Your stack, wherever u are</Text>
 
               {stacks.length > 0 && (
                 <View style={styles.section}>
@@ -161,7 +167,7 @@ export default function GroupStacksScreen({ navigation }) {
                           {stack.members.length} member{stack.members.length === 1 ? '' : 's'}
                         </Text>
                       </View>
-                      <Text style={styles.chevron}>›</Text>
+                      <ChevronRight size={20} color={theme.textMuted} />
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -202,7 +208,7 @@ export default function GroupStacksScreen({ navigation }) {
 
               {stacks.length === 0 && invites.length === 0 && (
                 <View style={styles.emptyState}>
-                  <Text style={styles.emptyEmoji}>👥</Text>
+                  <Users size={40} color={theme.textMuted} strokeWidth={1.5} style={styles.emptyIcon} />
                   <Text style={styles.emptyTitle}>No group stacks yet</Text>
                   <Text style={styles.emptySubtitle}>
                     Create one to share a task list with family, friends, roommates — anyone.
@@ -228,8 +234,9 @@ export default function GroupStacksScreen({ navigation }) {
           </KeyboardAvoidingView>
         )}
       </SafeAreaView>
+
       <StatusBar style={theme.statusBarStyle} />
-    </LinearGradient>
+    </GradientBackground>
   );
 }
 
@@ -251,11 +258,6 @@ function makeStyles(theme) {
       borderRadius: 18,
       alignItems: 'center',
       justifyContent: 'center',
-    },
-    backText: {
-      fontSize: 24,
-      color: theme.text,
-      fontWeight: '600',
     },
     title: {
       ...typography.title,
@@ -307,10 +309,6 @@ function makeStyles(theme) {
       fontWeight: '400',
       color: theme.textMuted,
     },
-    chevron: {
-      fontSize: 22,
-      color: theme.textMuted,
-    },
     inviteCard: {
       backgroundColor: theme.card,
       borderWidth: 1,
@@ -351,7 +349,7 @@ function makeStyles(theme) {
     },
     acceptText: {
       ...typography.small,
-      color: '#fff',
+      color: theme.onAccent,
       fontWeight: '700',
     },
     emptyState: {
@@ -362,8 +360,7 @@ function makeStyles(theme) {
       gap: spacing.xs,
       marginBottom: spacing.lg,
     },
-    emptyEmoji: {
-      fontSize: 40,
+    emptyIcon: {
       marginBottom: spacing.sm,
     },
     emptyTitle: {

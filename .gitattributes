@@ -1,0 +1,7 @@
+# Windows git (core.autocrlf) rewrites line endings to CRLF on checkout by
+# default. That's harmless for most files here, but a CRLF shebang breaks
+# entrypoint.sh's "#!/bin/sh" inside the Linux container (bad interpreter),
+# so force LF for anything that ends up running inside Docker.
+*.sh text eol=lf
+Dockerfile text eol=lf
+Caddyfile text eol=lf

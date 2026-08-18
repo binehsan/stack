@@ -1,0 +1,176 @@
+/* Shared shell for Login and Signup — both pages render this same
+   structure (centered brand mark + card) so they read as one family. */
+
+.inlineLink {
+  color: var(--color-accent);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.legalNote {
+  text-align: center;
+  margin-top: var(--space-xs);
+}
+
+.wrap {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl) var(--space-md);
+}
+
+.backButton {
+  position: absolute;
+  top: var(--space-lg);
+  left: var(--space-lg);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--color-card);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-pill);
+  padding: 8px 14px 8px 10px;
+  transition: background 150ms ease;
+}
+
+.backButton:hover {
+  background: var(--color-accent-soft);
+}
+
+.inner {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.brandMark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: var(--space-xl);
+}
+
+.wordmark {
+  color: var(--color-text);
+  margin-top: var(--space-sm);
+}
+
+.tagline {
+  color: var(--color-text-muted);
+  font-weight: 400;
+  margin-top: var(--space-xs);
+}
+
+.card {
+  width: 100%;
+  padding: var(--space-lg);
+}
+
+.title {
+  color: var(--color-text);
+  margin-bottom: var(--space-sm);
+}
+
+.subtitle {
+  margin: 0 0 var(--space-md);
+  line-height: 1.5;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+.switchRow {
+  margin-top: var(--space-lg);
+  display: flex;
+  justify-content: center;
+}
+
+.pill {
+  background: var(--color-card);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-pill);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.switchText {
+  color: var(--color-text-muted);
+}
+
+.switchLink {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+/* "New here?" section — a single card below the login card, since there's
+   only one path now (install the PWA or just use it in a browser — the
+   same thing either way, not two separate products to choose between). */
+.noAccountSection {
+  width: 100%;
+  max-width: 400px;
+  margin-top: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.singlePathCard {
+  width: 100%;
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.pathTitle {
+  color: var(--color-text);
+  margin: 0;
+}
+
+.pathBody {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.pathButton {
+  width: 100%;
+  padding-top: var(--space-xs);
+}
+
+.pathButton > * {
+  width: 100%;
+}
+
+.installLink {
+  align-self: center;
+  color: var(--color-accent);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  margin-top: var(--space-xs);
+}
+
+@media (max-width: 480px) {
+  .wrap {
+    padding: var(--space-lg) var(--space-sm);
+  }
+
+  .card {
+    padding: var(--space-md);
+  }
+
+  .singlePathCard {
+    padding: var(--space-md);
+  }
+}

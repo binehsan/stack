@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <!-- viewport-fit=cover lets content paint under the iOS status bar /
+         home indicator, so the safe-area-inset-* env() vars below actually
+         have something to pad against instead of just adding dead space. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Stack — a calm place for your to-dos, solo or with the people you share life with." />
+    <meta name="theme-color" content="#583714" />
+    <!-- iOS-specific standalone-mode tags — vite-plugin-pwa's manifest.webmanifest
+         covers Android/desktop install, but Safari still needs these directly
+         in the document head to launch Add-to-Home-Screen without browser chrome.
+         mobile-web-app-capable is the standardized replacement Chrome/Edge now
+         want instead of the apple-prefixed tag — Safari doesn't understand it
+         yet, so both stay in until Safari catches up. -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Stack" />
+    <title>Stack — your tasks, together</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

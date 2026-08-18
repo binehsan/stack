@@ -15,7 +15,8 @@ const NAV_ITEMS = [
 
 // Shared authenticated-area layout — Dashboard, Group Stacks, and Settings
 // all render inside this so nav/theme-toggle/logout live in exactly one
-// place instead of being reimplemented per page.
+// place instead of being reimplemented per page. Every signed-in visitor
+// gets full access; the app has no paid tier.
 export default function AppShell({ children }) {
   const { toggleTheme, themeName, isSystemTheme } = useTheme();
   const { logout } = useAuth();
@@ -29,9 +30,8 @@ export default function AppShell({ children }) {
   return (
     <GradientBackground className={styles.shell}>
       <header className={styles.topbar}>
-        <NavLink to="/dashboard" className={styles.brand}>
+        <NavLink to="/dashboard" className={styles.brand} aria-label="Stack home">
           <Logo size={32} />
-          <span className={styles.brandName}>Stack</span>
         </NavLink>
 
         <nav className={styles.nav}>

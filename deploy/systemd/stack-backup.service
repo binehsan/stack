@@ -1,0 +1,13 @@
+[Unit]
+Description=Stack Postgres backup
+# Don't fire if Docker itself isn't up yet (e.g. right after a reboot,
+# before stack-backup.timer's first scheduled run) — avoids a guaranteed-
+# to-fail run racing the containers starting.
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=stackapp
+WorkingDirectory=/srv/stack
+ExecStart=/bin/bash /srv/stack/deploy/scripts/backup-db.sh

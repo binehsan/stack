@@ -14,22 +14,80 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Loads backend/.env if present (see backend/.env.example) — a no-op in any
+# environment that sets real env vars directly (systemd EnvironmentFile,
+# Docker, etc). Local dev with no .env at all still works: every setting
+# below falls back to the original insecure-but-functional dev default.
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-pw!ierftmal9(h*@tkjl97$015&i!gko5pngcw_a-!q*ms62ec'
+# SECURITY WARNING: keep the secret key used in production secret! Set
+# DJANGO_SECRET_KEY in the environment for any real deployment — generate one
+# with `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`.
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY', 'django-insecure-pw!ierftmal9(h*@tkjl97$015&i!gko5pngcw_a-!q*ms62ec'
+)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# SECURITY WARNING: don't run with debug turned on in production! Set
+# DJANGO_DEBUG=false in the environment for any real deployment.
+DEBUG = os.environ.get('DJANGO_DEBUG', 'true').lower() == 'true'
 
-# Single-user local dev app reachable from a phone on the same network via Expo Go,
-# so we accept any host/origin here. Tighten this before ever deploying beyond localhost.
-ALLOWED_HOSTS = ['*']
+# Error monitoring — no-ops entirely if SENTRY_DSN isn't set, so this is
+# safe to leave in place in every environment including local dev. Create a
+# free project at sentry.io (Platform: Django) to get a DSN — same account
+# as the PWA's VITE_SENTRY_DSN works fine for both, as two separate
+# projects under it.
+_sentry_dsn = os.environ.get('SENTRY_DSN', '')
+if _sentry_dsn:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=_sentry_dsn,
+        integrations=[DjangoIntegration()],
+        environment='production' if not DEBUG else 'development',
+        traces_sample_rate=0.2,
+        # Request bodies can carry passwords (login/register/change-password
+        # all POST plaintext ones) — never send them to a third party.
+        send_default_pii=False,
+    )
+
+# Single-user local dev app reachable from a phone on the same network via
+# Expo Go, so we accept any host by default. Set DJANGO_ALLOWED_HOSTS to a
+# comma-separated list (e.g. "api.stackapp.com") for any real deployment.
+_allowed_hosts_env = os.environ.get('DJANGO_ALLOWED_HOSTS', '')
+ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_env.split(',') if h.strip()] or ['*']
+
+# Trust X-Forwarded-Host/-Proto from whatever's in front of Django — Caddy
+# in production, and PWA/vite.config.js's dev proxy locally when testing
+# through a tunnel. Without this, request.build_absolute_uri() (used for
+# avatar/group-photo URLs — see family/serializers.py) reports Django's own
+# view of itself (e.g. "localhost:8000" behind the proxy) instead of the
+# public-facing host, producing image URLs nothing outside that proxy can
+# ever actually reach. Safe unconditionally: with no proxy in front (plain
+# `manage.py runserver`), these headers are simply absent and behavior is
+# unchanged.
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# `manage.py check --deploy`'s remaining recommendations, applied whenever
+# DEBUG is off (i.e. any real deployment) rather than left as manual
+# checklist items — nginx is expected to terminate TLS and proxy everything
+# to gunicorn over plain HTTP on localhost, so SSL_REDIRECT is safe to force.
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 
 
 # Application definition
@@ -46,7 +104,6 @@ INSTALLED_APPS = [
     'accounts',
     'tasks',
     'family',
-    'billing',
 ]
 
 MIDDLEWARE = [
@@ -58,10 +115,18 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'accounts.middleware.TrackLastActiveMiddleware',
 ]
 
-# Dev-only: allow the Expo app (any local IP/port) to call the API.
-CORS_ALLOW_ALL_ORIGINS = True
+# Dev default: allow the Expo app (any local IP/port) to call the API. Set
+# CORS_ALLOWED_ORIGINS to a comma-separated list (e.g.
+# "https://stackapp.com,https://www.stackapp.com") for any real deployment —
+# doing so switches this to an explicit allowlist instead of allowing all.
+_cors_allowed_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', '')
+if _cors_allowed_origins_env:
+    CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_allowed_origins_env.split(',') if o.strip()]
+else:
+    CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'config.urls'
 
@@ -86,12 +151,34 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Toggle, not two separate configs to pick between by hand: POSTGRES_DB
+# unset (the case for plain `venv`/`runserver` local dev, since nothing sets
+# it there) keeps the exact SQLite behavior this project always had. Once
+# it's set — which docker-compose.yml's backend service always does, since
+# it also runs the `postgres` service below — this switches the whole
+# project to Postgres instead. There is deliberately no in-between "half
+# migrated" state.
+if os.environ.get('POSTGRES_DB'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ['POSTGRES_DB'],
+            'USER': os.environ.get('POSTGRES_USER', 'postgres'),
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', ''),
+            'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
+            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            # Overridable so Docker (if ever run without Postgres) can point
+            # this at a volume-mounted path that survives a container being
+            # rebuilt/replaced — BASE_DIR is what bare venv dev has always used.
+            'NAME': os.environ.get('DJANGO_DB_PATH', str(BASE_DIR / 'db.sqlite3')),
+        }
+    }
 
 
 # Password validation
@@ -132,6 +219,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+# Where `manage.py collectstatic` gathers files for nginx (or any real
+# deployment) to serve directly — unused in local dev (DEBUG's runserver
+# serves STATIC_URL itself), only read once you run collectstatic.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # User-uploaded avatars. Served via config/urls.py in DEBUG only — fine for
 # local dev, would need real storage (e.g. S3) before any real deployment.
@@ -151,6 +242,21 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    # Scoped, not global — only the three unauthenticated endpoints that
+    # were genuinely brute-forceable (see accounts/views.py's
+    # throttle_scope = 'auth' on LoginView/RegisterView/
+    # PasswordResetRequestView) opt into this; everything else is unrated,
+    # keyed per-IP via DRF's default AnonRateThrottle/ScopedRateThrottle
+    # (since these are all pre-login, there's no user to key on yet).
+    'DEFAULT_THROTTLE_CLASSES': (
+        'rest_framework.throttling.ScopedRateThrottle',
+    ),
+    'DEFAULT_THROTTLE_RATES': {
+        # 10/min stops a credential-stuffing/spam loop cold while still
+        # being generous enough that a real person fat-fingering their
+        # password a few times in a row never gets caught by it.
+        'auth': '10/min',
+    },
 }
 
 SIMPLE_JWT = {
@@ -162,20 +268,50 @@ SIMPLE_JWT = {
 }
 
 
-# RevenueCat webhook shared secret — required to authenticate
-# POST /api/billing/revenuecat-webhook/ (see billing/views.py
-# RevenueCatWebhookView). Get this value from the RevenueCat dashboard
-# (Project settings > Webhooks > the "Authorization header value" you set
-# there) and set it as an env var; see backend/README.md's Billing section.
-# Unset/empty means the webhook rejects everything (reject-closed).
-REVENUECAT_WEBHOOK_SECRET = os.environ.get('REVENUECAT_WEBHOOK_SECRET', '')
+# Web Push (VAPID) — backs the PWA's push notifications (see
+# accounts/webpush.py's send_web_push and accounts/models.py's
+# WebPushSubscription). Generate a keypair once with:
+#   npx web-push generate-vapid-keys
+# VAPID_PUBLIC_KEY also needs to be set as VITE_VAPID_PUBLIC_KEY in the
+# PWA's own env (PWA/.env) — same value, read by the browser to subscribe.
+# Empty VAPID_PRIVATE_KEY means send_web_push no-ops instead of crashing.
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
+VAPID_CLAIMS_EMAIL = os.environ.get('VAPID_CLAIMS_EMAIL', 'admin@example.com')
 
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
+# Transactional only (password reset for now; see accounts/emails.py for
+# the shared branded template other notifications can reuse later). Dev
+# default (EMAIL_BACKEND unset) is Django's console backend: emails print to
+# the runserver terminal instead of actually sending, so local dev needs no
+# real credentials. Set EMAIL_BACKEND to the smtp path + the rest of these
+# once you have real provider credentials.
+_email_backend = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+# host/port/etc are SMTP-specific kwargs — the console backend's constructor
+# rejects any options it doesn't recognize, so these are only built (and
+# only need to be) when actually using the smtp backend.
+_mailer_options = {}
+if _email_backend == 'django.core.mail.backends.smtp.EmailBackend':
+    _mailer_options = {
+        'host': os.environ.get('EMAIL_HOST', ''),
+        'port': int(os.environ.get('EMAIL_PORT', '587')),
+        'username': os.environ.get('EMAIL_HOST_USER', ''),
+        'password': os.environ.get('EMAIL_HOST_PASSWORD', ''),
+        'use_tls': os.environ.get('EMAIL_USE_TLS', 'true').lower() == 'true',
+    }
+
 MAILERS = {
     'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
+        'BACKEND': _email_backend,
+        'OPTIONS': _mailer_options,
     },
 }
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Stack <noreply@example.com>')
+
+# The website's own base URL — used to build links *inside* emails (e.g. the
+# password reset link) and to load the logo image from website/public/,
+# since an email can't reach into this Django project's own static files.
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')

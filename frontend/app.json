@@ -13,8 +13,9 @@
     },
     "android": {
       "package": "com.stack.app",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FFEB97",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -28,8 +29,16 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/icon.png",
-          "color": "#7C5CFC"
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#A8551C"
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Stack uses your microphone to turn spoken tasks into text.",
+          "speechRecognitionPermission": "Stack uses speech recognition to turn your voice into task text.",
+          "androidSpeechServicePackages": ["com.google.android.googlequicksearchbox", "com.google.android.tts"]
         }
       ]
     ],

@@ -16,9 +16,11 @@ export default function PrimaryButton({ title, onPress, loading, disabled }) {
       activeOpacity={0.85}
     >
       {loading ? (
-        <ActivityIndicator color="#fff" />
+        <ActivityIndicator color={theme.onAccent} />
       ) : (
-        <Text style={styles.text}>{title}</Text>
+        <Text style={styles.text} numberOfLines={1}>
+          {title}
+        </Text>
       )}
     </TouchableOpacity>
   );
@@ -30,6 +32,10 @@ function makeStyles(theme) {
       backgroundColor: theme.accent,
       borderRadius: radii.md,
       paddingVertical: spacing.md,
+      // Missing before — with none, a long title (e.g. "Create free
+      // account") ran flush to the button's own edges since the button
+      // itself stretches to fill its container's width.
+      paddingHorizontal: spacing.lg,
       alignItems: 'center',
       justifyContent: 'center',
       shadowColor: theme.shadow,
@@ -43,7 +49,7 @@ function makeStyles(theme) {
     },
     text: {
       ...typography.bodyStrong,
-      color: '#fff',
+      color: theme.onAccent,
     },
   });
 }

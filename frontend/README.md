@@ -23,7 +23,7 @@ frontend/
       usePollingOnFocus.js       # interval polling, paused when unfocused/backgrounded — used by GroupStackDetailScreen
     api/
       config.js                  # backend base URL — EDIT THIS for your network
-      client.js                   # shared fetch wrapper: attaches JWT, silently refreshes on 401, supports FormData uploads
+      client.js                   # shared fetch wrapper: attaches JWT, silently refreshes on 401, supports FormData uploads, surfaces `err.code`/`err.status` for error responses
       auth.js                      # register/login/change-password/delete-account/profile/avatar calls
       tasks.js                      # task CRUD + reorder/focus/carry-forward/recap/suggestions/stats calls (account mode)
       localTasks.js                  # AsyncStorage-backed task CRUD with the same signatures as tasks.js (guest mode)
@@ -31,16 +31,15 @@ frontend/
     screens/
       LoginScreen.js               # email/password login, "continue as guest"
       RegisterScreen.js             # email/password/confirm/username sign-up
-      HomeScreen.js                  # today's stack: input, chips, focus section, draggable list, Dump, group-stack cards (or guest CTA banner), modals
+      HomeScreen.js                  # today's stack: input, focus section, draggable list, Dump, group-stack cards (or guest CTA banner), modals
       MyStackScreen.js                # account: avatar, @username, stats grid, reset time, change password, log out, delete account. Guest: sign-up pitch + locked feature teasers
       GroupStacksScreen.js             # hub: stacks you're in (tap to open), pending invites, create a new stack
       GroupStackDetailScreen.js         # one stack's own photo, members/invite, shared task list, polls for updates while focused
     components/
-      TaskInput.js                   # the add-task text field + button (placeholder/autoFocus configurable, reused by group stacks)
+      TaskInput.js                   # the add-task text field + button + mic button (placeholder/autoFocus configurable, reused by group stacks) — mic runs real on-device speech-to-text (expo-speech-recognition, the OS's own recognizer, no third-party API) live into the text field
       TaskList.js                     # active-task rows via NestableDraggableFlatList + empty state — shares HomeScreen's scroll area with FocusSection/DumpSection
       TaskItem.js                      # a single row: checkbox, strikethrough, star, drag handle, swipe-to-delete
       FocusSection.js                  # up to 3 starred "today's focus" tasks
-      QuickAddChips.js                  # tappable recurring-task suggestions
       DumpSection.js                     # collapsible "done today" bucket completed tasks fall into
       CarryForwardModal.js                # opt-in prompt to bring yesterday's unfinished tasks forward
       RecapModal.js                        # once-per-day "you did X of Y" summary
@@ -105,25 +104,85 @@ This prints a QR code in the terminal.
 
 ### Push notifications (optional — the app works fine without this)
 
-Nudging a group-stack task now sends a push notification to the assignee.
-That plumbing is all wired up in code, but **Expo Go can't receive remote
-push notifications** — it needs a real EAS project and a custom dev-client
-build. None of the rest of the app needs this; skip it if you don't care
-about testing push on-device yet.
+Nudging a group-stack task, and inviting someone to one, both send a push
+notification. That plumbing is all wired up in code, but two things outside
+the code have to be true first, or every send just silently no-ops:
+
+1. **Expo Go can't receive remote push at all** (dropped since SDK 53) — you
+   need a real EAS project and a custom **dev-client** build, not the plain
+   Expo Go app.
+2. **Android additionally needs Firebase credentials.** Expo's push service
+   delivers to Android through Google's Firebase Cloud Messaging (FCM) —
+   Google's infrastructure for pushing notifications to Android devices,
+   same as every other app on the Play Store uses. Expo can't send to an
+   Android device unless it's been handed credentials for *your* Firebase
+   project (a Google-side service account key). Without them,
+   `getExpoPushTokenAsync()` on the device just fails, which
+   `pushRegistration.js` swallows silently — so the symptom is simply
+   "nothing ever arrives," not an error you'll see. **iOS doesn't need
+   this step.**
+
+#### Setup (one-time)
 
 | Step | Who |
 |------|-----|
 | Create a free account at [expo.dev](https://expo.dev) | You |
-| From `frontend/`, run `eas init` — links this project to your account and writes a real `projectId` into `app.json`'s `extra.eas` block (replace the `REPLACE_WITH_YOUR_EAS_PROJECT_ID` placeholder) | You |
-| For iOS push: enroll in the [Apple Developer Program](https://developer.apple.com/programs/) — required for APNs credentials | You |
-| Run `eas build --profile development` and install the resulting build on a physical device (not a simulator — push tokens are unreliable there) | You |
-| Everything else — permission request flow, token registration, backend storage, send-on-nudge | Already done |
+| From `frontend/`, run `eas init` — links this project to your account and writes a real `projectId` into `app.json`'s `extra.eas` block | You (already done for this repo — a real `projectId` is already set) |
+| **Android only:** create a free project at [console.firebase.google.com](https://console.firebase.google.com), then run `eas credentials`, choose Android → push notifications, and let it either generate or upload your Firebase service account key | You |
+| **iOS only:** enroll in the [Apple Developer Program](https://developer.apple.com/programs/) — required for APNs credentials, which `eas credentials` will also walk you through | You |
+| Run `eas build --profile development` and install the resulting build on a **physical device** (not a simulator — push tokens don't work there) | You |
+| Everything else — permission request flow, token registration, backend storage, send-on-nudge/send-on-invite | Already done |
 
-Once a dev-client build is installed and you're logged in, creating or
-joining your first group stack triggers the permission prompt
-(`src/notifications/pushRegistration.js`) — accepting it registers your
-device's Expo push token with the backend (`POST /api/auth/push-token/`).
-From then on, anyone nudging a task onto you fires a real push.
+#### Testing it end-to-end
+so 
+You need **two accounts on two physical devices** (or one device + one
+person helping) — a push notification can't be observed on the same device
+that triggers it.
+
+1. On both devices, install the **dev-client build** from the setup step
+   above and open it (not Expo Go) — then run `npx expo start --dev-client`
+   and connect both to it.
+2. Log into a different account on each device.
+3. On Device A: create a group stack, then invite Device B's username to it.
+   Accepting the OS permission prompt the first time you touch a group stack
+   is what registers that device's push token — if you dismissed/denied it
+   once, reinstall or reset notification permissions for the app in system
+   settings, since the app won't re-prompt on its own.
+4. Device B should get a push within a few seconds for the invite. Accept it.
+5. On Device A: add a task to the shared stack and nudge it onto Device B's
+   username (the "Nudge" button on the task row).
+6. Device B should get a second push for the nudge.
+
+If step 3/4 or 6 doesn't arrive: back out one variable at a time — confirm
+both devices are on the dev-client build (not Expo Go), confirm notification
+permission was actually granted (check the OS's own notification settings
+for the app), and on Android confirm `eas credentials` shows FCM
+credentials configured. The backend logs `## Expo push send failed: ...` to
+its console on any send failure, which is the fastest way to tell "never
+sent" apart from "sent but not delivered."
+
+### No monetization
+
+This app is entirely free — no purchase capability, no paid tier, no ads,
+anywhere in the app or the backend it talks to. It used to have a
+RevenueCat-based in-app purchase flow and a Stripe-backed website
+subscription; both have been fully removed (not just disabled) —
+`PaywallModal.js`, `BillingContext.js`, the `billing` Django app, the
+`react-native-purchases` dependency, and everything that fed any of it are
+gone, so there's no dormant purchase path a future config change could
+accidentally re-enable.
+
+### Voice input
+
+Tapping the mic in `TaskInput` runs real speech-to-text via
+[`expo-speech-recognition`](https://www.npmjs.com/package/expo-speech-recognition),
+which wraps the phone's own built-in recognizer (iOS `SFSpeechRecognizer` /
+Android `SpeechRecognizer`). That recognizer may use its OS vendor's cloud
+service under the hood for its network-based mode, but it's free and
+built-in — Stack doesn't call or pay for any third-party speech API. Like
+push notifications above, **this is a native module: it will not work in
+Expo Go**, or in a dev-client build made before this change landed — it
+needs the same fresh `eas build --profile development` as that.
 
 ## Notes / judgment calls
 
@@ -132,8 +191,12 @@ From then on, anyone nudging a task onto you fires a real push.
   type checking.
 - Used `fetch` directly instead of adding `axios` — one fewer dependency,
   and `fetch` is all this app's simple CRUD calls need.
-- No icon library — the "+" button in `TaskInput` is plain text, to avoid an
-  extra dependency for a single glyph.
+- Icons are [lucide-react-native](https://lucide.dev) (+ its `react-native-svg`
+  peer dependency) — every icon in the app is one of these, not emoji. Chosen
+  over `@expo/vector-icons`' font-based sets specifically because it's
+  SVG-based, so things like the starred/unstarred focus toggle can actually
+  render a filled vs. outlined icon (a font glyph can't do that — there's
+  only one shape per character).
 - Delete works both ways: swiping a task fully to the left auto-deletes it,
   and a partial swipe reveals a "Delete" button you can tap instead.
 - List enter/exit/reorder animations use `react-native-reanimated`'s built-in

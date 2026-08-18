@@ -127,6 +127,28 @@
   color: var(--color-text);
 }
 
+.closingChoice {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-xs);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.closingChoiceItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.closingChoiceDivider {
+  color: var(--color-text-muted);
+  opacity: 0.6;
+}
+
 /* ---- Mockup primitives ---- */
 
 .mockCard {

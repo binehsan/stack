@@ -4,7 +4,7 @@ import { MotiView } from 'moti';
 import { useTheme } from '../context/ThemeContext';
 import { radii, spacing, typography } from '../theme';
 
-export default function StatTile({ emoji, value, label, sublabel, delay = 0 }) {
+export default function StatTile({ Icon, value, label, sublabel, delay = 0 }) {
   const { theme } = useTheme();
   const styles = makeStyles(theme);
 
@@ -15,7 +15,7 @@ export default function StatTile({ emoji, value, label, sublabel, delay = 0 }) {
       transition={{ type: 'timing', duration: 300, delay }}
       style={styles.tile}
     >
-      <Text style={styles.emoji}>{emoji}</Text>
+      <Icon size={20} color={theme.accent} strokeWidth={2} style={styles.icon} />
       <Text style={styles.value}>{value}</Text>
       <Text style={styles.label}>{label}</Text>
       {sublabel ? <Text style={styles.sublabel}>{sublabel}</Text> : null}
@@ -34,8 +34,7 @@ function makeStyles(theme) {
       borderRadius: radii.md,
       padding: spacing.md,
     },
-    emoji: {
-      fontSize: 22,
+    icon: {
       marginBottom: spacing.xs,
     },
     value: {

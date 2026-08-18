@@ -12,6 +12,17 @@ dist
 dist-ssr
 *.local
 
+# docker-compose's own var substitution file (DOMAIN, etc.) — see .env.example
+.env
+
+# Written directly onto the VPS filesystem by docker-compose.yml's bind
+# mounts (avatars/static files) and deploy/scripts/backup-db.sh (DB dumps)
+# — real runtime data living inside the repo checkout, never meant to be
+# committed.
+/media/
+/staticfiles/
+/backups/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -37,6 +37,12 @@ export function usePollingOnFocus(onTick, intervalMs = 6000) {
 
       function start() {
         if (intervalId) return;
+        // Tick right away, not just on the first interval — otherwise
+        // whatever another member changed while this screen was
+        // unfocused/backgrounded stays invisible for up to a full
+        // `intervalMs` after you come back, which reads as a stuck/stale
+        // copy of the group stack rather than "still polling."
+        runTick();
         intervalId = setInterval(runTick, intervalMs);
       }
       function stop() {

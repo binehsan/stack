@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { ChevronLeft, Monitor, Smartphone } from 'lucide-react';
 
 import { useAuth } from '../auth/AuthContext';
 import GradientBackground from '../components/GradientBackground';
@@ -9,6 +10,7 @@ import Card from '../components/Card';
 import AuthTextField from '../components/AuthTextField';
 import PrimaryButton from '../components/PrimaryButton';
 import ErrorBanner from '../components/ErrorBanner';
+import GetTheAppCard from '../components/GetTheAppCard';
 import SyntaxCredit from '../components/SyntaxCredit';
 import styles from './Auth.module.css';
 
@@ -37,7 +39,7 @@ export default function Login() {
       await login(email.trim(), password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Something went wrong — try again.');
+      setError(err.message || 'Something went wrong, try again.');
     } finally {
       setLoading(false);
     }
@@ -46,6 +48,11 @@ export default function Login() {
   return (
     <GradientBackground>
       <div className={styles.wrap}>
+        <Link to="/" className={styles.backButton} aria-label="Back to home">
+          <ChevronLeft size={18} strokeWidth={2.5} />
+          <span>Back</span>
+        </Link>
+
         <div className={styles.inner}>
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -85,19 +92,53 @@ export default function Login() {
                 />
                 <PrimaryButton type="submit" title="Log in" loading={loading} />
               </form>
+              <div className={styles.switchRow}>
+                <Link to="/forgot-password" className={styles.pill}>
+                  <span className={`text-small ${styles.switchText}`}>
+                    Forgot your <span className={styles.switchLink}>password?</span>
+                  </span>
+                </Link>
+              </div>
             </Card>
           </motion.div>
-
-          <div className={styles.switchRow}>
-            <Link to="/signup" className={styles.pill}>
-              <span className={`text-small ${styles.switchText}`}>
-                Don't have an account? <span className={styles.switchLink}>Sign up</span>
-              </span>
-            </Link>
-          </div>
-
-          <SyntaxCredit />
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.42, delay: 0.16 }}
+          className={styles.noAccountSection}
+        >
+          <p className={`text-small ${styles.noAccountHeading}`}>Don't have an account yet?</p>
+
+          <div className={styles.pathRow}>
+            <Card className={styles.pathCard}>
+              <div className={styles.pathIconBadge}>
+                <Monitor size={20} strokeWidth={2.25} />
+              </div>
+              <h3 className={`text-title ${styles.pathTitle}`}>Use Stack on the web</h3>
+              <p className={`text-small text-muted ${styles.pathBody}`}>
+                The full Stack experience in any browser. Completely free.
+              </p>
+              <div className={styles.pathButton}>
+                <PrimaryButton as={Link} to="/signup" title="Sign up free" />
+              </div>
+            </Card>
+
+            <Card className={styles.pathCard}>
+              <div className={styles.pathIconBadge}>
+                <Smartphone size={20} strokeWidth={2.25} />
+              </div>
+              <h3 className={`text-title ${styles.pathTitle}`}>Get the app</h3>
+              <p className={`text-small text-muted ${styles.pathBody}`}>
+                Stack for iOS and Android is completely free, no subscription needed.
+              </p>
+              <GetTheAppCard />
+            </Card>
+          </div>
+        </motion.div>
+
+        <SyntaxCredit />
       </div>
     </GradientBackground>
   );

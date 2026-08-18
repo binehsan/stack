@@ -1,7 +1,10 @@
 import { useRef } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Swipeable } from 'react-native-gesture-handler';
+// Reanimated-backed Swipeable — see TaskItem.js's import comment for why
+// (and why this is a default import, not a named one).
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, { FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
+import { Check } from 'lucide-react-native';
 
 import Avatar from './Avatar';
 import { useTheme } from '../context/ThemeContext';
@@ -39,12 +42,13 @@ export default function GroupTaskItem({ task, onToggle, onDelete, onNudge }) {
         ref={swipeableRef}
         renderRightActions={renderRightActions}
         overshootRight={false}
+        overshootFriction={8}
         onSwipeableOpen={handleDelete}
       >
         <View style={styles.card}>
           <TouchableOpacity onPress={() => onToggle(task)} activeOpacity={0.8} style={styles.checkRow}>
             <View style={[styles.checkbox, task.completed && styles.checkboxCompleted]}>
-              {task.completed && <Text style={styles.checkmark}>✓</Text>}
+              {task.completed && <Check size={14} color={theme.onAccent} strokeWidth={3} />}
             </View>
             <Text
               style={[styles.text, task.completed && styles.textCompleted]}
@@ -99,11 +103,6 @@ function makeStyles(theme) {
     },
     checkboxCompleted: {
       backgroundColor: theme.accent,
-    },
-    checkmark: {
-      color: '#fff',
-      fontSize: 14,
-      fontWeight: '700',
     },
     text: {
       flex: 1,

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { ChevronLeft, Smartphone } from 'lucide-react';
 
 import { useAuth } from '../auth/AuthContext';
 import GradientBackground from '../components/GradientBackground';
@@ -64,9 +65,9 @@ export default function Signup() {
     setLoading(true);
     try {
       await register(trimmedEmail, password, confirm, trimmedUsername);
-      navigate('/dashboard');
+      navigate('/welcome');
     } catch (err) {
-      setError(err.message || 'Something went wrong — try again.');
+      setError(err.message || 'Something went wrong, try again.');
     } finally {
       setLoading(false);
     }
@@ -75,6 +76,11 @@ export default function Signup() {
   return (
     <GradientBackground>
       <div className={styles.wrap}>
+        <Link to="/" className={styles.backButton} aria-label="Back to home">
+          <ChevronLeft size={18} strokeWidth={2.5} />
+          <span>Back</span>
+        </Link>
+
         <div className={styles.inner}>
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -93,7 +99,15 @@ export default function Signup() {
             transition={{ duration: 0.42, delay: 0.09 }}
           >
             <Card elevated className={styles.card}>
-              <h2 className={`text-title ${styles.title}`}>Create an account</h2>
+              <h2 className={`text-title ${styles.title}`}>Create your Stack account</h2>
+              <p className={`text-small text-muted ${styles.subtitle}`}>
+                <Smartphone
+                  size={14}
+                  strokeWidth={2.25}
+                  style={{ verticalAlign: '-2px', marginRight: 6 }}
+                />
+                One free account works everywhere — the website and the iOS/Android app.
+              </p>
               <ErrorBanner message={error} />
               <form className={styles.form} onSubmit={handleRegister} noValidate>
                 <AuthTextField

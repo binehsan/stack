@@ -24,7 +24,7 @@ export default function AuthTextField({ label, ...inputProps }) {
 function makeStyles(theme) {
   return StyleSheet.create({
     container: {
-      marginBottom: spacing.md,
+      marginBottom: spacing.sm,
     },
     label: {
       ...typography.small,

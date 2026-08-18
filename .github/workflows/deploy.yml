@@ -1,0 +1,48 @@
+name: Deploy
+
+# Pushing to main is the only "login" this needs day-to-day — this SSHes in
+# for you using a deploy key stored as a repo secret, builds the two images
+# directly on the VPS (simplest option: no container registry, no `docker
+# login` on the server, no image-tag bookkeeping), and restarts anything
+# that changed. One-time setup below; after that, `git push` is the deploy.
+#
+# One-time setup:
+#   1. On your machine: ssh-keygen -t ed25519 -f stack_deploy_key -N ""
+#   2. Append stack_deploy_key.pub to the VPS's ~/.ssh/authorized_keys
+#      (for the user that owns /srv/stack).
+#   3. In this repo's GitHub Settings -> Secrets and variables -> Actions,
+#      add three repo secrets:
+#        VPS_HOST     - the VPS's IP or hostname
+#        VPS_USER     - the SSH user from step 2
+#        VPS_SSH_KEY  - contents of stack_deploy_key (the private half)
+#   4. Make sure /srv/stack on the VPS is already a clone of this repo with
+#      backend/.env and .env (see docker-compose.yml's comment) filled in —
+#      this workflow only pulls and rebuilds, it doesn't create either file.
+#   5. Node needs to be installed on the VPS itself (not just in Docker) —
+#      the PWA is built as static files served directly by the system
+#      nginx (see deploy/nginx/stack.conf), not inside a container.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            cd /srv/stack
+            git pull --ff-only
+            docker compose up -d --build
+            docker image prune -f
+            cd PWA
+            npm ci
+            npm run build

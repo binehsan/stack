@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Stack Postgres backup daily
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+# Catches up on a missed run if the VPS happened to be rebooting/down
+# exactly at 03:30 — better than silently skipping a whole day's backup.
+Persistent=true
+RandomizedDelaySec=600
+
+[Install]
+WantedBy=timers.target

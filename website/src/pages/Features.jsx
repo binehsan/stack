@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, Trash2, ChevronDown, Users, Plus, RefreshCw, Flame, CheckCircle2, Palette } from 'lucide-react';
+import { Star, Trash2, ChevronDown, Users, Plus, RefreshCw, Flame, CheckCircle2, Palette, Monitor, Smartphone } from 'lucide-react';
 
 import GradientBackground from '../components/GradientBackground';
 import PrimaryButton from '../components/PrimaryButton';
@@ -124,42 +124,42 @@ const SECTIONS = [
     icon: Star,
     eyebrow: 'Focus',
     title: 'See today’s priorities, not your whole list',
-    body: 'Star up to three tasks and they lift into a highlighted strip at the top of your stack. It’s optional — the app works fine with zero stars — but on a day with fifteen things to do, it’s the difference between a list and a plan.',
+    body: 'Star up to three tasks and they lift into a highlighted strip at the top of your stack. It’s optional, the app works fine with zero stars, but on a day with fifteen things to do, it’s the difference between a list and a plan.',
     Mockup: FocusMockup,
   },
   {
     icon: Trash2,
     eyebrow: 'Dump',
     title: 'Finished tasks stick around long enough to matter',
-    body: 'Complete something and it doesn’t just disappear — it slides into the Dump, a collapsed strip you can expand to see everything you got done today. Satisfying to glance at, easy to ignore when you don’t need it.',
+    body: 'Complete something and it doesn’t just disappear, it slides into the Dump, a collapsed strip you can expand to see everything you got done today. Satisfying to glance at, easy to ignore when you don’t need it.',
     Mockup: DumpMockup,
   },
   {
     icon: Users,
     eyebrow: 'Group Stacks',
     title: 'Share a list with the people you live and work with',
-    body: 'Start a Group Stack for your household, roommates, or friend group. Everyone can add items, check things off, and see who added what — with invites to bring people in and nudges so nothing stalls out.',
+    body: 'Start a Group Stack for your household, roommates, or friend group. Everyone can add items, check things off, and see who added what, with invites to bring people in and nudges so nothing stalls out.',
     Mockup: GroupStacksMockup,
   },
   {
     icon: RefreshCw,
     eyebrow: 'Sync',
     title: 'One stack, every device',
-    body: 'Sign up free and your stack stops living on a single phone. Add a task on your laptop at work, cross it off from your phone on the way home — it’s the same list, always current.',
+    body: 'Stack syncs across every phone and tablet you own, no extra setup — and the same free account works on the web: keep working from any browser, or install Stack as a desktop app on Windows or macOS. Add a task on your laptop at work, cross it off from your phone on the way home, and it stays current everywhere in between. Any native desktop app or browser extension Stack ships later comes free too.',
     Mockup: SyncMockup,
   },
   {
     icon: Flame,
     eyebrow: 'Recap',
     title: 'A quick look back, and a reason to come back',
-    body: 'Open the app and get a short recap of what you finished, plus a lightweight streak for days you got at least one thing done. No leaderboards, no shame spirals if you break it — just a nice nudge.',
+    body: 'Open the app and get a short recap of what you finished, plus a lightweight streak for days you got at least one thing done. No leaderboards, no shame spirals if you break it, just a nice nudge.',
     Mockup: RecapMockup,
   },
   {
     icon: Palette,
     eyebrow: 'Appearance',
     title: 'Make it feel like yours',
-    body: 'Switch between Dawn and Dusk, or let Stack follow your system setting automatically. Stack Pro unlocks Premium Purple, Forest Green, and Alpine Blue color families for both light and dark.',
+    body: 'Switch between Dawn and Dusk, or let Stack follow your system setting automatically. Classic, Purple, Forest Green, and Alpine Blue are all free, on the app and on the web.',
     Mockup: ThemeMockup,
   },
 ];
@@ -180,7 +180,7 @@ export default function Features() {
           <h1 className={styles.heroTitle}>Everything Stack does, in detail</h1>
           <p className={styles.heroBody}>
             No due dates, no projects, no categories to configure. Just the handful of features
-            that make a daily to-do list actually pleasant to use — alone or with other people.
+            that make a daily to-do list actually pleasant to use, alone or with other people.
           </p>
         </motion.div>
       </section>
@@ -219,7 +219,16 @@ export default function Features() {
           transition={{ duration: 0.4 }}
         >
           <h2 className={styles.closingTitle}>See it for yourself</h2>
-          <PrimaryButton as={Link} to="/signup" title="Get started free" variant="solid" />
+          <p className={styles.closingChoice}>
+            <span className={styles.closingChoiceItem}>
+              <Monitor size={15} strokeWidth={2.25} /> free on the web
+            </span>
+            <span className={styles.closingChoiceDivider}>or</span>
+            <span className={styles.closingChoiceItem}>
+              <Smartphone size={15} strokeWidth={2.25} /> free on mobile
+            </span>
+          </p>
+          <PrimaryButton as={Link} to="/signup" title="Get Stack, free" variant="solid" />
         </motion.div>
       </section>
 

@@ -1,5 +1,6 @@
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MotiView } from 'moti';
+import { X } from 'lucide-react-native';
 
 import Avatar from './Avatar';
 import { useTheme } from '../context/ThemeContext';
@@ -35,7 +36,7 @@ export default function NudgeModal({ visible, task, members, onSelect, onClose }
                 activeOpacity={0.7}
               >
                 <View style={styles.clearIcon}>
-                  <Text style={styles.clearIconText}>✕</Text>
+                  <X size={16} color={theme.textMuted} strokeWidth={2.5} />
                 </View>
                 <Text style={styles.memberName}>Clear assignment</Text>
               </TouchableOpacity>
@@ -113,10 +114,6 @@ function makeStyles(theme) {
       backgroundColor: theme.accentSoft,
       alignItems: 'center',
       justifyContent: 'center',
-    },
-    clearIconText: {
-      color: theme.textMuted,
-      fontWeight: '700',
     },
     memberName: {
       ...typography.body,

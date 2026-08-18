@@ -7,7 +7,7 @@ import TaskInput from '../components/dashboard/TaskInput';
 import FocusSection from '../components/dashboard/FocusSection';
 import TaskList from '../components/dashboard/TaskList';
 import DumpSection from '../components/dashboard/DumpSection';
-import { createTask, deleteTask, fetchTasks, updateTask } from '../api/tasks';
+import { createTask, deleteTask, fetchTasks, reorderTasks, updateTask } from '../api/tasks';
 import styles from './Dashboard.module.css';
 
 const MAX_FOCUS_STARS = 3;
@@ -19,16 +19,13 @@ const DUMP_DELAY_MS = 320;
 // The core "My Stack" experience: fetch tasks on mount, then everything is
 // optimistic local state synced to the backend in the background, with
 // rollback on failure — same data flow as frontend/src/screens/HomeScreen.js.
-//
-// Scope cut: drag-to-reorder is intentionally not implemented here. It's a
-// touch/native-flatlist interaction with no clean web equivalent in scope
-// for this MVP, and `reorderTasks` is unused as a result.
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [justCompletedIds, setJustCompletedIds] = useState(() => new Set());
   const dumpTimers = useRef({});
+  const reorderCommitTimer = useRef(null);
 
   useEffect(() => {
     fetchTasks()
@@ -39,7 +36,22 @@ export default function Dashboard() {
     const timers = dumpTimers.current;
     return () => {
       Object.values(timers).forEach(clearTimeout);
+      clearTimeout(reorderCommitTimer.current);
     };
+  }, []);
+
+  // Mobile refetches on every screen focus (React Navigation's
+  // useFocusEffect in HomeScreen.js); a browser tab has no such lifecycle
+  // event while it just sits open, so without this, reordering (or
+  // anything else) on another device wouldn't show up here until a manual
+  // refresh or a route change remounted the page. This is the web
+  // equivalent — refetch whenever the tab regains visibility.
+  useEffect(() => {
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') handleRefresh();
+    }
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
   async function handleRefresh() {
@@ -140,6 +152,31 @@ export default function Dashboard() {
     }
   }
 
+  // Mirrors frontend/src/screens/HomeScreen.js's handleReorder: TaskList's
+  // Reorder.Group only knows about the active subset it was given, so the
+  // reordered ids get merged back against the full `tasks` state (active
+  // tasks take the new order, everything else — Dump — keeps its position).
+  // Fires on every intermediate drag step, so the actual persist call is
+  // debounced rather than sent per step; optimistic tasks (not yet saved,
+  // still carrying a `temp-...` id) are dropped from that call since the
+  // backend only knows real ids.
+  function handleReorder(orderedTasks) {
+    setTasks((prev) => {
+      const byId = new Map(prev.map((t) => [String(t.id), t]));
+      const reorderedActive = orderedTasks.map((t) => byId.get(String(t.id))).filter(Boolean);
+      const reorderedIdSet = new Set(orderedTasks.map((t) => String(t.id)));
+      const rest = prev.filter((t) => !reorderedIdSet.has(String(t.id)));
+      return [...reorderedActive, ...rest];
+    });
+
+    clearTimeout(reorderCommitTimer.current);
+    reorderCommitTimer.current = setTimeout(() => {
+      const ids = orderedTasks.filter((t) => typeof t.id === 'number').map((t) => t.id);
+      if (ids.length === 0) return;
+      reorderTasks(ids).catch((err) => console.warn('Failed to save new order:', err.message));
+    }, 400);
+  }
+
   async function handleDelete(id) {
     const previousTasks = tasks;
     clearDumpTimer(id);
@@ -205,6 +242,7 @@ export default function Dashboard() {
                 tasks={activeTasks}
                 onToggle={handleToggle}
                 onDelete={handleDelete}
+                onReorder={handleReorder}
                 {...starProps}
                 EmptyIcon={doneTasks.length > 0 ? CheckCircle2 : Sun}
                 emptyTitle={doneTasks.length > 0 ? 'All done for today' : undefined}

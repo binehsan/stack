@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { NestableDraggableFlatList } from 'react-native-draggable-flatlist';
+import { Sun } from 'lucide-react-native';
 
 import TaskItem from './TaskItem';
 import { useTheme } from '../context/ThemeContext';
@@ -15,7 +16,9 @@ export default function TaskList({
   onToggleStar,
   starDisabled,
   onReorder,
-  emptyEmoji = '🌤️',
+  // A component reference (e.g. `CheckCircle2`), not an icon name string —
+  // callers import the lucide icon they want and pass it straight through.
+  EmptyIcon = Sun,
   emptyTitle = 'Nothing on your plate yet',
   emptySubtitle = "Add a task above to start today's stack.",
 }) {
@@ -25,7 +28,7 @@ export default function TaskList({
   if (tasks.length === 0) {
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyEmoji}>{emptyEmoji}</Text>
+        <EmptyIcon size={40} color={theme.textMuted} strokeWidth={1.5} style={styles.emptyIcon} />
         <Text style={styles.emptyTitle}>{emptyTitle}</Text>
         <Text style={styles.emptySubtitle}>{emptySubtitle}</Text>
       </View>
@@ -38,7 +41,7 @@ export default function TaskList({
         data={tasks}
         keyExtractor={(task) => String(task.localId ?? task.id)}
         onDragEnd={({ data }) => onReorder?.(data.map((task) => task.id))}
-        renderItem={({ item, drag, isActive }) => (
+        renderItem={({ item, drag, isActive, index }) => (
           <TaskItem
             task={item}
             onToggle={onToggle}
@@ -47,6 +50,11 @@ export default function TaskList({
             starDisabled={starDisabled}
             onDrag={onReorder ? drag : undefined}
             isDragging={isActive}
+            // Whatever's on top is next up — a standalone visual cue
+            // (see TaskItem's cardTop style) independent of starring/focus
+            // mode, and it just follows the list order, drag-reorder
+            // included.
+            isTopItem={index === 0}
           />
         )}
       />
@@ -67,8 +75,7 @@ function makeStyles(theme) {
       paddingVertical: spacing.xl,
       gap: spacing.xs,
     },
-    emptyEmoji: {
-      fontSize: 40,
+    emptyIcon: {
       marginBottom: spacing.sm,
     },
     emptyTitle: {

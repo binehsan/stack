@@ -1,0 +1,123 @@
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.backLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--color-text);
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: background 150ms ease;
+}
+
+.backLink:hover {
+  background: var(--color-accent-soft);
+}
+
+.title {
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.loadingWrap {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-xl) 0;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid var(--color-card-border);
+  border-top-color: var(--color-accent);
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.photoRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.membersWrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.taskList {
+  margin-top: var(--space-md);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-xs);
+  padding: var(--space-xl) var(--space-md);
+  color: var(--color-text-muted);
+}
+
+.emptyIcon {
+  margin-bottom: var(--space-sm);
+  color: var(--color-text-muted);
+}
+
+.emptyTitle {
+  color: var(--color-text);
+}
+
+.emptySubtitle {
+  color: var(--color-text-muted);
+  max-width: 420px;
+}
+
+.leaveButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: var(--space-lg) auto 0;
+  background: none;
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-danger);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: background 150ms ease;
+}
+
+.leaveButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+}
+
+.leaveButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

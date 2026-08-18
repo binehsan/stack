@@ -1,6 +1,11 @@
 from django.conf import settings
 from django.db import models
 
+# Abuse-prevention cap, not a paywall — applies to every group stack
+# regardless of tier, purely to stop a group being abused as an unlimited
+# public broadcast list. Enforced in views.py's RespondGroupInviteView.
+GROUP_MEMBER_ABUSE_CAP = 20
+
 
 class GroupStack(models.Model):
     """A shared, ongoing task list for a group (not day-scoped like the

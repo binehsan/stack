@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MotiView } from 'moti';
+import { Check } from 'lucide-react-native';
 
 import { useTheme } from '../context/ThemeContext';
 import { radii, spacing, typography } from '../theme';
@@ -57,7 +58,7 @@ export default function CarryForwardModal({ visible, candidates, onSubmit }) {
                   activeOpacity={0.7}
                 >
                   <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
-                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                    {isSelected && <Check size={12} color={theme.onAccent} strokeWidth={3} />}
                   </View>
                   <Text style={styles.itemText} numberOfLines={2}>
                     {task.text}
@@ -147,11 +148,6 @@ function makeStyles(theme) {
     checkboxChecked: {
       backgroundColor: theme.accent,
     },
-    checkmark: {
-      color: '#fff',
-      fontSize: 12,
-      fontWeight: '700',
-    },
     itemText: {
       ...typography.body,
       color: theme.text,
@@ -180,7 +176,7 @@ function makeStyles(theme) {
     },
     primaryText: {
       ...typography.small,
-      color: '#fff',
+      color: theme.onAccent,
       fontWeight: '700',
     },
   });

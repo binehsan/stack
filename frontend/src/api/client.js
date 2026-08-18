@@ -77,7 +77,15 @@ export async function request(path, options = {}, { auth = true, retry = true } 
     } catch {
       // response wasn't JSON — fall through to the generic message below
     }
-    throw new Error(extractErrorMessage(body, fallback));
+    const error = new Error(extractErrorMessage(body, fallback));
+    // Some error responses carry a machine-readable `code` (e.g.
+    // "GROUP_MEMBER_CAP") alongside `detail` so a caller can branch on *why*
+    // the request failed without string-matching `.message`. Most callers
+    // only ever read `.message`, so this is purely additive.
+    error.status = response.status;
+    if (body && typeof body.code === 'string') error.code = body.code;
+    if (body && typeof body.reset_at === 'string') error.resetAt = body.reset_at;
+    throw error;
   }
 
   if (response.status === 204) return null;
