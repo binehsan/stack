@@ -19,6 +19,19 @@ if ('scrollRestoration' in window.history) {
   window.history.scrollRestoration = 'manual'
 }
 
+// A tab left open across a deploy still has the PREVIOUS build's JS loaded
+// — when it lazy-loads a route (see App.jsx's lazy() imports) whose chunk
+// filename changed in the new build (content-hashed, so every deploy
+// renames them), the fetch 404s and Vite's preload runtime dispatches this
+// event instead of just throwing into the void. The fix is always the
+// same — the tab needs the CURRENT build, which only a real reload gets —
+// so do that automatically instead of showing a scary crash screen for
+// what's really just "a new version shipped while you were looking at this
+// page."
+window.addEventListener('vite:preloadError', () => {
+  window.location.reload()
+})
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Sentry.ErrorBoundary fallback={CrashScreen}>

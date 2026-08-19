@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import { CheckCircle2, ClipboardList, LogOut } from 'lucide-react';
+import { Camera, CheckCircle2, ClipboardList, LogOut } from 'lucide-react';
 
 import Avatar from '../components/groups/Avatar';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -18,6 +18,7 @@ import {
   fetchGroupTasks,
   leaveGroupStack,
   nudgeGroupTask,
+  updateGroupStack,
   updateGroupTask,
 } from '../api/groupStacks';
 import styles from './GroupStackDetail.module.css';
@@ -37,6 +38,9 @@ export default function GroupStackDetail() {
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [nudgeTask, setNudgeTask] = useState(null);
   const [leaving, setLeaving] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState(null);
+  const photoInputRef = useRef(null);
 
   // `silent` skips the loading-spinner/error-state churn — used by the
   // background poll and refocus refetch below so a new member showing up
@@ -121,6 +125,24 @@ export default function GroupStackDetail() {
     }
   }
 
+  async function handlePhotoChange(event) {
+    const file = event.target.files?.[0];
+    event.target.value = ''; // allow re-selecting the same file later
+    if (!file) return;
+
+    setPhotoError(null);
+    setPhotoUploading(true);
+    try {
+      const updated = await updateGroupStack(stackId, { image: file });
+      setStack(updated);
+    } catch (err) {
+      console.warn('Failed to update group stack photo:', err.message);
+      setPhotoError(err.message || 'Failed to update photo.');
+    } finally {
+      setPhotoUploading(false);
+    }
+  }
+
   async function handleDeleteTask(id) {
     const previous = tasks;
     setTasks((prev) => prev.filter((t) => t.id !== id));
@@ -178,7 +200,26 @@ export default function GroupStackDetail() {
       ) : (
         <>
           <div className={styles.photoRow}>
-            <Avatar uri={stack?.image} label={stack?.name} size={56} />
+            <div className={styles.photoShell}>
+              <Avatar uri={stack?.image} label={stack?.name} size={56} />
+              <button
+                type="button"
+                className={styles.photoEditBadge}
+                onClick={() => photoInputRef.current?.click()}
+                aria-label="Change group photo"
+                disabled={photoUploading}
+              >
+                <Camera size={12} strokeWidth={2.5} />
+              </button>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className={styles.photoHiddenInput}
+                onChange={handlePhotoChange}
+                disabled={photoUploading}
+              />
+            </div>
             <div className={styles.membersWrap}>
               <MemberList
                 members={stack?.members || []}
@@ -187,6 +228,7 @@ export default function GroupStackDetail() {
               />
             </div>
           </div>
+          {photoError && <p className={`text-small ${styles.photoErrorText}`}>{photoError}</p>}
 
           <AnimatePresence initial={false}>
             {showInviteForm && <InviteCard stackId={stackId} />}

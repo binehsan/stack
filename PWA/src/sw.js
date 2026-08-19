@@ -55,6 +55,13 @@ self.addEventListener('push', (event) => {
       // since it's the plainer, smaller mark rather than the full icon.
       icon: '/icon-192.png',
       badge: '/favicon.png',
+      // Without an explicit pattern, whether Android vibrates at all is
+      // just whatever that device/Chrome version defaults to — inconsistent
+      // enough to read as "sometimes it doesn't." A real pattern here is
+      // what actually guarantees it (buzz, pause, buzz), same as a native
+      // app's notification would. No effect on platforms that ignore
+      // `vibrate` entirely (iOS, desktop) — just a silently-unused field.
+      vibrate: [200, 100, 200],
       data: data || {},
       tag: data?.inviteId ? `invite-${data.inviteId}` : data?.stackId ? `stack-${data.stackId}` : undefined,
     })
