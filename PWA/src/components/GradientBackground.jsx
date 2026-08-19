@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { isStandalonePwa } from '../pwaMode';
 import styles from './GradientBackground.module.css';
 
 // Web port of frontend/src/components/GradientBackground.js. Same three
@@ -8,15 +9,22 @@ import styles from './GradientBackground.module.css';
 // theme's gradient (crossfades theme switches instead of hard-cutting),
 // and a slow-drifting oversized copy for subtle ambient motion. Plus a
 // fourth, web-only layer: a soft radial glow that follows the cursor for
-// a bit of ambient depth. Its position is written straight to a CSS custom
-// property from a ref on every mousemove instead of React state, so moving
-// the mouse never triggers a re-render — only the compositor does any work.
+// a bit of ambient depth — desktop-browser-tab only. In standalone/
+// installed mode it's dropped entirely (no listener, no element): on
+// touch-only installs it never did anything anyway (no mousemove ever
+// fires), but an installed *desktop* PWA does have a real cursor, and
+// there a pointer-tracking glow reads as "still a webpage" rather than a
+// fixed app window — the opposite of what installing was supposed to buy.
+// Its position is written straight to a CSS custom property from a ref on
+// every mousemove instead of React state, so moving the mouse never
+// triggers a re-render — only the compositor does any work.
 export default function GradientBackground({ children, className, fullHeight = true }) {
   const { theme } = useTheme();
   const gradientCss = `linear-gradient(135deg, ${theme.gradient[0]}, ${theme.gradient[1]}, ${theme.gradient[2]})`;
   const prevRef = useRef(theme.gradient);
   const [outgoing, setOutgoing] = useState(null);
   const glowRef = useRef(null);
+  const standalone = isStandalonePwa();
 
   useEffect(() => {
     if (prevRef.current === theme.gradient) return;
@@ -28,6 +36,7 @@ export default function GradientBackground({ children, className, fullHeight = t
   }, [theme.gradient]);
 
   useEffect(() => {
+    if (standalone) return;
     function handleMove(e) {
       const el = glowRef.current;
       if (!el) return;
@@ -36,7 +45,7 @@ export default function GradientBackground({ children, className, fullHeight = t
     }
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
-  }, []);
+  }, [standalone]);
 
   return (
     // The base gradient is a plain `background` on `.wrap` itself now, not
@@ -84,7 +93,7 @@ export default function GradientBackground({ children, className, fullHeight = t
           transition={{ duration: 1.4, ease: 'easeOut' }}
         />
       </div>
-      <div ref={glowRef} className={styles.glow} style={{ '--glow-color': theme.accent }} />
+      {!standalone && <div ref={glowRef} className={styles.glow} style={{ '--glow-color': theme.accent }} />}
       <div className={styles.content}>{children}</div>
     </div>
   );
