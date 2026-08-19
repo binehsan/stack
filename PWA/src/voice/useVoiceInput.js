@@ -21,6 +21,14 @@ function isStandalone() {
 // UI can hide the button with a real reason instead of a dead control.
 const BLOCKED_IOS_STANDALONE = isIOS() && isStandalone();
 
+// Standalone version of the same check, for callers (e.g. PermissionsPrompt)
+// that need to know whether voice input can ever work on this device without
+// mounting the full useVoiceInput hook — e.g. to skip asking for mic
+// permission, or hide voice-related copy/icons, when it can't.
+export function isVoiceInputBlocked() {
+  return BLOCKED_IOS_STANDALONE;
+}
+
 // Triggers the OS microphone-permission prompt directly, ahead of the first
 // time someone actually taps the mic button — used by PermissionsPrompt so
 // new users see the mic/notification asks together, once, right after

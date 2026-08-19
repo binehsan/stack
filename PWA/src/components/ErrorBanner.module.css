@@ -7,4 +7,11 @@
   font-size: 14px;
   font-weight: 500;
   margin-bottom: var(--space-md);
+  /* Same Android-Chrome rounded-corner compositing artifact as Card.module.css
+     (see comment there): this banner sits inside the page's animated
+     route-transition wrapper, so it can inherit a "dirty" transform layer
+     from its ancestor and mis-render its rounded corners. Force its own
+     clean compositing layer. */
+  isolation: isolate;
+  transform: translateZ(0);
 }

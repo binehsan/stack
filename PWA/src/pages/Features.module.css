@@ -364,18 +364,25 @@
 }
 
 @media (max-width: 820px) {
+  /* Each feature becomes a single column: text then its own image,
+     directly beneath it. On desktop, .rowReverse alternates which side
+     the image sits on for visual variety, but carrying that alternation
+     into the single-column mobile layout meant every other feature's
+     image rendered ABOVE its heading instead of below it — a zigzag
+     that made it unclear which image belonged with which feature. Force
+     the same text-then-image order for every row at mobile widths so
+     each pairing reads unambiguously, top to bottom, in the order
+     they're written in the DOM. */
   .row {
     grid-template-columns: 1fr;
-    gap: var(--space-lg);
+    gap: var(--space-md);
   }
 
   .rowReverse .textCol,
-  .rowReverse .visualCol {
-    order: initial;
-  }
-
+  .rowReverse .visualCol,
+  .textCol,
   .visualCol {
-    order: -1;
+    order: initial;
   }
 }
 

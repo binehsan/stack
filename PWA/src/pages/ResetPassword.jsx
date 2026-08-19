@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronLeft } from 'lucide-react';
 
 import { confirmPasswordReset } from '../api/auth';
 import GradientBackground from '../components/GradientBackground';
@@ -55,11 +54,6 @@ export default function ResetPassword() {
   return (
     <GradientBackground>
       <div className={styles.wrap}>
-        <Link to="/login" className={styles.backButton} aria-label="Back to log in">
-          <ChevronLeft size={18} strokeWidth={2.5} />
-          <span>Back</span>
-        </Link>
-
         <div className={styles.inner}>
           <motion.div
             initial={{ opacity: 0, y: -10 }}

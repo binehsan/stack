@@ -14,34 +14,43 @@
 
 .wrap {
   position: relative;
+  /* 100vh is the fallback for browsers without dvh support; the second
+     declaration overrides it where dvh is available. Plain 100vh locks to
+     the layout viewport, which doesn't shrink when the on-screen keyboard
+     opens on Android/iOS — that mismatch is what made this section (and
+     the logo inside it) appear to detach and stay pinned while the rest of
+     the page scrolled underneath. 100dvh tracks the actual visible
+     (dynamic) viewport, so this wrapper — and everything in it — resizes
+     and scrolls as one normal flow instead. */
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* Deliberately NOT `center` (nor `safe center` — iOS Safari doesn't
+     reliably honor that value here, so the "safe" fallback didn't actually
+     fix anything on the devices this was reported on). Plain `center`
+     centers by overflowing equally both directions once content is taller
+     than the viewport — which this page's content (logo + card + the "New
+     to Stack?" card + footer) routinely is on a phone — pushing the logo
+     above the visible area instead of trimming the bottom. `flex-start`
+     has no such failure mode in any browser: content always starts flush
+     at the top, so the logo is always the first thing on screen regardless
+     of how tall the rest of the page is. Trades away vertical centering on
+     screens tall enough that it would've fit — worth it for a layout that
+     can never again read as "loaded pre-scrolled." */
+  justify-content: flex-start;
   padding: var(--space-xl) var(--space-md);
-}
-
-.backButton {
-  position: absolute;
-  top: var(--space-lg);
-  left: var(--space-lg);
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  color: var(--color-text);
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 600;
-  background: var(--color-card);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-pill);
-  padding: 8px 14px 8px 10px;
-  transition: background 150ms ease;
-}
-
-.backButton:hover {
-  background: var(--color-accent-soft);
+  /* AppShell's topbar does this for every authenticated page
+     (`padding-top: calc(... + env(safe-area-inset-top))`) — this page
+     never had the equivalent. The status bar is `black-translucent` (see
+     index.html), meaning content draws UNDERNEATH it rather than below a
+     solid bar, so without this the logo renders right up against — or
+     literally behind — the status bar's time/signal/battery icons at the
+     very top of the screen. That's a real, physical overlap, not a scroll
+     or background issue, and explains "cut off at the top" far more
+     literally than anything tried before this. */
+  padding-top: calc(var(--space-xl) + env(safe-area-inset-top));
 }
 
 .inner {
@@ -126,6 +135,7 @@
 
 .singlePathCard {
   width: 100%;
+  max-width: 340px;
   padding: var(--space-lg);
   display: flex;
   flex-direction: column;
@@ -164,6 +174,7 @@
 @media (max-width: 480px) {
   .wrap {
     padding: var(--space-lg) var(--space-sm);
+    padding-top: calc(var(--space-lg) + env(safe-area-inset-top));
   }
 
   .card {

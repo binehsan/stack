@@ -1,17 +1,24 @@
 .wrap {
   position: relative;
-  overflow: hidden;
   width: 100%;
   transition: background 200ms ease;
 }
 
 .fullHeight {
+  /* Same dvh-over-vh reasoning as Auth.module.css's .wrap — plain 100vh is
+     iOS Safari's static/large viewport reference, which doesn't match the
+     dynamically-visible area once the toolbar is showing. This is a
+     SEPARATE element from Auth's own wrapper (GradientBackground wraps
+     every page, Auth's .wrap is nested inside it) — fixing one without the
+     other left this one still using the stale reference. */
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
-.base {
+.backdrop {
   position: absolute;
   inset: 0;
+  overflow: hidden;
 }
 
 .layer {

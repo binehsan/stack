@@ -10,7 +10,8 @@
   background: var(--color-card);
   border: 1px solid var(--color-card-border);
   border-radius: var(--radius-md);
-  padding: var(--space-md);
+  padding: calc(var(--space-md) + 6px) var(--space-md);
+  min-height: 60px;
 }
 
 .dragHandle {
@@ -166,8 +167,9 @@
 
 @media (max-width: 420px) {
   .card {
-    padding: var(--space-sm) var(--space-md);
+    padding: calc(var(--space-sm) + 4px) var(--space-md);
     gap: var(--space-xs);
+    min-height: 52px;
   }
 
   .checkRow {

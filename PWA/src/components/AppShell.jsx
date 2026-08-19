@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutList, Users, Settings as SettingsIcon, Moon, Sun, SunMoon, LogOut } from 'lucide-react';
+import { LayoutList, Users, Settings as SettingsIcon, Moon, Sun, SunMoon, LogOut, CircleUser } from 'lucide-react';
 
 import Logo from './Logo';
 import GradientBackground from './GradientBackground';
@@ -51,6 +51,14 @@ export default function AppShell({ children }) {
         <div className={styles.actions}>
           <button type="button" className={styles.iconButton} onClick={toggleTheme} aria-label="Toggle theme">
             {isSystemTheme ? <SunMoon size={17} /> : themeName === 'dawn' ? <Sun size={17} /> : <Moon size={17} />}
+          </button>
+          <button
+            type="button"
+            className={styles.iconButton}
+            onClick={() => navigate('/settings')}
+            aria-label="Account"
+          >
+            <CircleUser size={17} />
           </button>
           <button type="button" className={styles.iconButton} onClick={handleLogout} aria-label="Log out">
             <LogOut size={17} />

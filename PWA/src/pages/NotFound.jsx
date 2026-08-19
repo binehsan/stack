@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
 
 import GradientBackground from '../components/GradientBackground';
 import Logo from '../components/Logo';
@@ -11,11 +10,6 @@ export default function NotFound() {
   return (
     <GradientBackground>
       <div className={styles.wrap}>
-        <Link to="/" className={styles.backButton} aria-label="Back to home">
-          <ChevronLeft size={18} strokeWidth={2.5} />
-          <span>Back</span>
-        </Link>
-
         <div className={styles.inner}>
           <div className={styles.brandMark}>
             <Logo size={56} />

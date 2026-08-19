@@ -73,7 +73,7 @@ export default function Landing() {
             <PrimaryButton as={Link} to="/login" title="Log in" variant="ghost" />
           </div>
           <p className={styles.heroNote}>
-            Completely free, on the web and on mobile.
+            Completely free, on the web and on mobile — installs in seconds, under 600KB.
           </p>
         </motion.div>
       </section>

@@ -1,6 +1,6 @@
 name: Deploy
 
-# Pushing to main is the only "login" this needs day-to-day — this SSHes in
+# Pushing to master is the only "login" this needs day-to-day — this SSHes in
 # for you using a deploy key stored as a repo secret, builds the two images
 # directly on the VPS (simplest option: no container registry, no `docker
 # login` on the server, no image-tag bookkeeping), and restarts anything
@@ -24,7 +24,7 @@ name: Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   workflow_dispatch: {}
 
 jobs:

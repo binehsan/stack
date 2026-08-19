@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Download } from 'lucide-react';
+import { Download } from 'lucide-react';
 
 import { useAuth } from '../auth/AuthContext';
 import { createTask } from '../api/tasks';
@@ -81,7 +81,13 @@ export default function Signup() {
     try {
       await register(trimmedEmail, password, confirm, trimmedUsername);
       await flushPendingShare();
-      navigate('/welcome');
+      // Hard navigation, not `navigate('/welcome')` — see the matching
+      // comment in Login.jsx's handleLogin. Same save-password-prompt
+      // moment, same fix: a real document load is what resets Chrome's
+      // toolbar back to hidden after the OS Autofill overlay leaves it
+      // stuck, since a client-side route change never touches the
+      // Activity's chrome at all.
+      window.location.assign('/welcome');
     } catch (err) {
       setError(err.message || 'Something went wrong, try again.');
     } finally {
@@ -92,11 +98,6 @@ export default function Signup() {
   return (
     <GradientBackground>
       <div className={styles.wrap}>
-        <Link to="/" className={styles.backButton} aria-label="Back to home">
-          <ChevronLeft size={18} strokeWidth={2.5} />
-          <span>Back</span>
-        </Link>
-
         <div className={styles.inner}>
           <motion.div
             initial={{ opacity: 0, y: -10 }}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 
+import BottomSheet from '../BottomSheet';
 import styles from './CarryForwardModal.module.css';
 
 // Opt-in only, per spec: nothing carries forward automatically. This shows
@@ -28,63 +28,42 @@ export default function CarryForwardModal({ visible, candidates, onSubmit }) {
   if (!candidates || candidates.length === 0) return null;
 
   return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          className={styles.overlay}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
-        >
-          <motion.div
-            className={styles.card}
-            initial={{ opacity: 0, y: 16, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.96 }}
-            transition={{ duration: 0.26 }}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Bring anything forward?"
-          >
-            <h3 className={`text-title ${styles.title}`}>Bring anything forward?</h3>
-            <p className={`text-small ${styles.subtitle}`}>
-              {candidates.length === 1
-                ? 'You had 1 task left over from yesterday.'
-                : `You had ${candidates.length} tasks left over from yesterday.`}{' '}
-              Pick any you&rsquo;d like on today&rsquo;s stack — totally optional.
-            </p>
+    <BottomSheet open={visible} dismissible={false} label="Bring anything forward?">
+      <h3 className={`text-title ${styles.title}`}>Bring anything forward?</h3>
+      <p className={`text-small ${styles.subtitle}`}>
+        {candidates.length === 1
+          ? 'You had 1 task left over from yesterday.'
+          : `You had ${candidates.length} tasks left over from yesterday.`}{' '}
+        Pick any you&rsquo;d like on today&rsquo;s stack — totally optional.
+      </p>
 
-            <div className={styles.list}>
-              {candidates.map((task) => {
-                const isSelected = selected.has(task.id);
-                return (
-                  <button
-                    key={task.id}
-                    type="button"
-                    className={[styles.item, isSelected && styles.itemSelected].filter(Boolean).join(' ')}
-                    onClick={() => toggle(task.id)}
-                  >
-                    <span className={[styles.checkbox, isSelected && styles.checkboxChecked].filter(Boolean).join(' ')}>
-                      {isSelected && <Check size={12} strokeWidth={3} color="var(--color-on-accent)" />}
-                    </span>
-                    <span className={`text-body ${styles.itemText}`}>{task.text}</span>
-                  </button>
-                );
-              })}
-            </div>
+      <div className={styles.list}>
+        {candidates.map((task) => {
+          const isSelected = selected.has(task.id);
+          return (
+            <button
+              key={task.id}
+              type="button"
+              className={[styles.item, isSelected && styles.itemSelected].filter(Boolean).join(' ')}
+              onClick={() => toggle(task.id)}
+            >
+              <span className={[styles.checkbox, isSelected && styles.checkboxChecked].filter(Boolean).join(' ')}>
+                {isSelected && <Check size={12} strokeWidth={3} color="var(--color-on-accent)" />}
+              </span>
+              <span className={`text-body ${styles.itemText}`}>{task.text}</span>
+            </button>
+          );
+        })}
+      </div>
 
-            <div className={styles.actions}>
-              <button type="button" className={styles.skipButton} onClick={() => handleSubmit([])}>
-                Not today
-              </button>
-              <button type="button" className={styles.primaryButton} onClick={() => handleSubmit([...selected])}>
-                {selected.size === 0 ? 'Start fresh' : `Bring forward (${selected.size})`}
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      <div className={styles.actions}>
+        <button type="button" className={styles.skipButton} onClick={() => handleSubmit([])}>
+          Not today
+        </button>
+        <button type="button" className={styles.primaryButton} onClick={() => handleSubmit([...selected])}>
+          {selected.size === 0 ? 'Start fresh' : `Bring forward (${selected.size})`}
+        </button>
+      </div>
+    </BottomSheet>
   );
 }

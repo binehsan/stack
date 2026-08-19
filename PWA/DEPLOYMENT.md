@@ -417,6 +417,67 @@ From here on: **`git push` to `main` is the deploy.**
 
 ---
 
+## Setting up Sentry — error monitoring, button by button
+
+The SDK side of this is already done — `backend/config/settings.py` and
+`PWA/src/sentry.js` both no-op entirely if their DSN env var isn't set, so
+nothing breaks by leaving this for later. What's actually missing is the
+account: creating the two projects and getting their DSNs.
+
+**On sentry.io:**
+1. Go to **sentry.io** → **Sign up** (free tier — 5k errors/month, plenty
+   for this) → sign up with GitHub or email.
+2. First-run wizard asks you to create an organization — any name is fine,
+   this is just a container for projects, not public.
+3. **Create the backend project**: click **Projects** in the left sidebar →
+   **Create Project** → under Platform, search for and select **Django** →
+   name it `stack-backend` → **Create Project**.
+4. Sentry shows a setup snippet after creation — you don't need it (already
+   in `settings.py`), just copy the **DSN** value from it (a URL starting
+   `https://...@...ingest.sentry.io/...`). You can also find it later at
+   **Settings → Projects → stack-backend → Client Keys (DSN)**.
+5. **Create the PWA project**: **Projects** → **Create Project** again →
+   Platform: **React** → name it `stack-pwa` → **Create Project** → copy
+   its DSN the same way. Same organization, two separate projects, so
+   backend and frontend errors don't mix in one feed.
+
+**Wire the DSNs in:**
+6. On the VPS, in `backend/.env` (edit over SSH, `nano backend/.env`):
+   ```
+   SENTRY_DSN=<the stack-backend DSN>
+   ```
+7. Locally, before the next PWA build/deploy, in `PWA/.env`:
+   ```
+   VITE_SENTRY_DSN=<the stack-pwa DSN>
+   ```
+   This one has to be set **before** `npm run build` — Vite bakes
+   `VITE_*` vars into the static build at build time, so setting it on the
+   VPS afterward does nothing; it needs to be in the `.env` that GitHub
+   Actions' build step reads (or committed to `PWA/.env` if you're
+   comfortable with a DSN being semi-public — Sentry DSNs are safe to
+   expose client-side by design, unlike the backend one).
+8. Pick up the backend change: `docker compose restart backend` (or
+   `up -d` if you changed other vars at the same time). The PWA change
+   just needs its next `npm run build`/deploy — no separate restart.
+
+**Confirm it actually works** (same as the post-deploy checklist item):
+9. Trigger a deliberate error — easiest is temporarily adding
+   `throw new Error('sentry test')` inside any component's render, loading
+   the page once, then removing it. For the backend, hit any endpoint
+   that'll 500, or add a throwaway `raise Exception('sentry test')` in a
+   view temporarily.
+10. Back on sentry.io, click **Issues** in the left sidebar (per-project, or
+    switch between `stack-backend`/`stack-pwa` in the project dropdown
+    top-left) — the test error should show up within a few seconds, with
+    a full stack trace.
+11. Remove the test error code once confirmed, redeploy.
+
+Optional next step, not needed to get basic monitoring working: **Alerts**
+(left sidebar) → set up an email/Slack notification rule so a new error
+type pages you instead of requiring you to check the dashboard.
+
+---
+
 ## Future updates — what a routine code change looks like
 
 Once the GitHub Actions secrets above are set up, the day-to-day loop is:

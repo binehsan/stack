@@ -10,23 +10,6 @@
   margin-bottom: var(--space-lg);
 }
 
-.backLink {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  color: var(--color-text);
-  text-decoration: none;
-  flex-shrink: 0;
-  transition: background 150ms ease;
-}
-
-.backLink:hover {
-  background: var(--color-accent-soft);
-}
-
 .title {
   color: var(--color-text);
   overflow: hidden;

@@ -1,6 +1,7 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 
+import BottomSheet from '../BottomSheet';
 import styles from './RecapModal.module.css';
 
 // A once-per-day, non-punishing summary. No streaks, no red framing — just
@@ -23,57 +24,38 @@ export default function RecapModal({ visible, recap, onClose }) {
       : "Here's how yesterday went.";
 
   return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          className={styles.overlay}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
+    <BottomSheet open={visible} dismissible={false} label="Yesterday's recap">
+      <div className={styles.card}>
+        {celebrate && (
+          <div className={styles.sparkleRow} aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <motion.span
+                key={i}
+                initial={{ opacity: 0, y: 6, scale: 0.5 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.32, delay: i * 0.09 }}
+              >
+                <Sparkles size={20} color="var(--color-accent)" fill="var(--color-accent)" />
+              </motion.span>
+            ))}
+          </div>
+        )}
+
+        <p className="text-tiny text-muted">Yesterday&rsquo;s recap</p>
+        <motion.p
+          className={styles.tally}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.32, delay: 0.1 }}
         >
-          <motion.div
-            className={styles.card}
-            initial={{ opacity: 0, y: 16, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.96 }}
-            transition={{ duration: 0.26 }}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Yesterday's recap"
-          >
-            {celebrate && (
-              <div className={styles.sparkleRow} aria-hidden="true">
-                {[0, 1, 2].map((i) => (
-                  <motion.span
-                    key={i}
-                    initial={{ opacity: 0, y: 6, scale: 0.5 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.32, delay: i * 0.09 }}
-                  >
-                    <Sparkles size={20} color="var(--color-accent)" fill="var(--color-accent)" />
-                  </motion.span>
-                ))}
-              </div>
-            )}
+          {completed} <span className={styles.tallyMuted}>of {total}</span>
+        </motion.p>
+        <p className={`text-body ${styles.message}`}>{message}</p>
 
-            <p className="text-tiny text-muted">Yesterday&rsquo;s recap</p>
-            <motion.p
-              className={styles.tally}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.32, delay: 0.1 }}
-            >
-              {completed} <span className={styles.tallyMuted}>of {total}</span>
-            </motion.p>
-            <p className={`text-body ${styles.message}`}>{message}</p>
-
-            <button type="button" className={styles.button} onClick={onClose}>
-              Start today
-            </button>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        <button type="button" className={styles.button} onClick={onClose}>
+          Start today
+        </button>
+      </div>
+    </BottomSheet>
   );
 }

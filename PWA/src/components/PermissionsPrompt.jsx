@@ -1,87 +1,86 @@
 import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Bell, Mic } from 'lucide-react';
+import { Bell, Check } from 'lucide-react';
 
 import { usePushSubscription } from '../push/usePushSubscription';
-import { primeMicPermission } from '../voice/useVoiceInput';
-import PrimaryButton from './PrimaryButton';
+import BottomSheet from './BottomSheet';
 import styles from './PermissionsPrompt.module.css';
 
 const PROMPTED_KEY = 'stack_permissions_prompted';
 
-// A one-time, right-after-first-login ask for both notifications and mic
-// access together — the native-app-onboarding pattern of asking upfront
-// instead of only lazily the first time someone happens to tap a
-// mic/notification-gated feature. Shows once ever per browser (tracked in
-// localStorage), regardless of whether either permission was actually
-// granted — re-asking on every visit would be more annoying than useful,
-// and both are still reachable later from Settings if skipped here.
+function PermissionRow({ icon: Icon, label, description, status, onEnable }) {
+  return (
+    <div className={styles.row}>
+      <span className={styles.rowIcon}>
+        <Icon size={16} strokeWidth={2.25} />
+      </span>
+      <div className={styles.rowText}>
+        <p className={styles.rowLabel}>{label}</p>
+        <p className={styles.rowDescription}>{description}</p>
+      </div>
+      {status === 'granted' ? (
+        <span className={styles.rowGranted} aria-label="Enabled">
+          <Check size={16} strokeWidth={2.75} />
+        </span>
+      ) : (
+        <button type="button" className={styles.rowButton} onClick={onEnable} disabled={status === 'requesting'}>
+          {status === 'requesting' ? 'Asking…' : status === 'denied' ? 'Try again' : 'Enable'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// A one-time, right-after-first-login ask for notifications. Used to also
+// ask for microphone access here (see git history / voice/useVoiceInput.js,
+// still intact and unused) — pulled after voice input turned out unreliable
+// enough in real testing that asking for a permission for a feature that
+// visibly didn't work was worse than not asking at all.
 export default function PermissionsPrompt() {
   const [dismissed, setDismissed] = useState(true);
-  const [working, setWorking] = useState(false);
-  const { supported: pushSupported, subscribe } = usePushSubscription();
+  const { supported: pushSupported, permission: pushPermission, subscribed, loading: pushLoading, subscribe } =
+    usePushSubscription();
 
   useEffect(() => {
-    if (!localStorage.getItem(PROMPTED_KEY)) setDismissed(false);
-  }, []);
+    if (!pushSupported || localStorage.getItem(PROMPTED_KEY)) return;
+    setDismissed(false);
+  }, [pushSupported]);
 
   function dismiss() {
     localStorage.setItem(PROMPTED_KEY, '1');
     setDismissed(true);
   }
 
-  async function handleEnable() {
-    setWorking(true);
-    try {
-      await Promise.allSettled([pushSupported ? subscribe() : Promise.resolve(), primeMicPermission()]);
-    } finally {
-      setWorking(false);
-      dismiss();
-    }
-  }
+  const pushStatus = subscribed
+    ? 'granted'
+    : pushLoading
+      ? 'requesting'
+      : pushPermission === 'denied'
+        ? 'denied'
+        : 'idle';
 
   return (
-    <AnimatePresence>
-      {!dismissed && (
-        <motion.div
-          className={styles.overlay}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
-        >
-          <motion.div
-            className={styles.card}
-            initial={{ opacity: 0, y: 16, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.96 }}
-            transition={{ duration: 0.26 }}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Enable notifications and voice input"
-          >
-            <div className={styles.iconRow}>
-              <span className={styles.iconBadge}>
-                <Bell size={18} strokeWidth={2.25} />
-              </span>
-              <span className={styles.iconBadge}>
-                <Mic size={18} strokeWidth={2.25} />
-              </span>
-            </div>
-            <h3 className={`text-title ${styles.title}`}>Turn on notifications & voice input</h3>
-            <p className={`text-small ${styles.subtitle}`}>
-              Get notified about group invites and nudges, and add tasks by speaking instead of
-              typing. You can change either of these later in Settings.
-            </p>
-            <div className={styles.actions}>
-              <button type="button" className={styles.skipButton} onClick={dismiss}>
-                Not now
-              </button>
-              <PrimaryButton title="Enable" onClick={handleEnable} loading={working} />
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <BottomSheet open={!dismissed} dismissible={false} label="Enable notifications">
+      <h3 className={`text-title ${styles.title}`}>Turn on notifications</h3>
+      <p className={`text-small ${styles.subtitle}`}>
+        Get notified about group invites and nudges. Stays reachable later from Settings if you
+        skip it here.
+      </p>
+
+      <div className={styles.rows}>
+        <PermissionRow
+          icon={Bell}
+          label="Notifications"
+          description="For group invites and nudges"
+          status={pushStatus}
+          onEnable={subscribe}
+        />
+      </div>
+
+      <div className={styles.actions}>
+        <button type="button" className={styles.skipButton} onClick={dismiss}>
+          Done
+        </button>
+      </div>
+    </BottomSheet>
   );
 }

@@ -68,7 +68,14 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const data = event.notification.data || {};
-  const path = data.stackId ? `/stacks/${data.stackId}` : '/stacks';
+  // `inviteId` (see backend/family/views.py's InviteToGroupStackView) only
+  // ever accompanies an invite push, never a nudge — used here instead of
+  // just checking `stackId` alone, which both payloads carry. Routing an
+  // invite straight to `/stacks/:stackId` was the actual bug behind
+  // "Couldn't load this stack": the invitee hasn't accepted yet, isn't a
+  // member, and GroupStackDetail's fetch of that stack's tasks legitimately
+  // fails for a non-member. The hub is where the accept/decline UI lives.
+  const path = data.inviteId ? '/stacks' : data.stackId ? `/stacks/${data.stackId}` : '/stacks';
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {

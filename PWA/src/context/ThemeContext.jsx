@@ -13,6 +13,20 @@ const ThemeContext = createContext(null);
 // component needing to reach into the theme object in JS. Components that
 // DO need the raw value (icon `color` props, inline gradients) can still
 // pull it from `theme` via useTheme().
+// Chrome/Android tints the browser toolbar (and Safari 15+ tints the tab
+// bar) with this meta tag's value, and an installed Android PWA's status
+// bar reads it too — left static, it stays whatever color was baked into
+// index.html forever regardless of which of the app's theme families is
+// active, so a purple-themed session would show a status bar in the
+// original brown. iOS's own status bar is handled separately (the
+// "black-translucent" tag in index.html, which draws over app content
+// rather than taking a color), so this only needs to touch the one meta
+// tag Android/desktop actually use.
+function applyThemeColorMeta(theme) {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', theme.gradient[2]);
+}
+
 function applyCssVars(theme) {
   const root = document.documentElement.style;
   root.setProperty('--gradient-1', theme.gradient[0]);
@@ -70,6 +84,7 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     applyCssVars(theme);
+    applyThemeColorMeta(theme);
     document.documentElement.dataset.mode = mode;
   }, [theme, mode]);
 

@@ -3,6 +3,14 @@
   border: 1px solid var(--color-card-border);
   border-radius: var(--radius-md);
   padding: var(--space-md);
+  /* Rounded corners + a box-shadow on the same element can mis-render on
+     Android Chrome (Skia sometimes tears/mis-anti-aliases the rounded
+     corner) when this element sits inside anything GPU-composited, e.g. a
+     framer-motion page transition or a drag/scale animation. Forcing this
+     element onto its own clean compositing layer avoids inheriting a dirty
+     transform origin from an ancestor and fixes the artifact. */
+  isolation: isolate;
+  transform: translateZ(0);
 }
 
 .elevated {

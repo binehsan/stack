@@ -39,27 +39,51 @@ export default function GradientBackground({ children, className, fullHeight = t
   }, []);
 
   return (
-    <div className={[styles.wrap, fullHeight && styles.fullHeight, className].filter(Boolean).join(' ')}>
-      <div className={styles.base} style={{ background: gradientCss }} />
-      <AnimatePresence>
-        {outgoing && (
-          <motion.div
-            className={styles.layer}
-            style={{ background: outgoing }}
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.45 }}
-          />
-        )}
-      </AnimatePresence>
-      <motion.div
-        className={styles.drift}
-        style={{ background: gradientCss }}
-        initial={{ x: -16, y: -16, opacity: 0.2 }}
-        animate={{ x: 12, y: 12, opacity: 0.4 }}
-        transition={{ duration: 1.4, ease: 'easeOut' }}
-      />
+    // The base gradient is a plain `background` on `.wrap` itself now, not
+    // a separately absolutely-positioned `.base` div trying to stretch to
+    // match it — that split was the actual bug behind the screenshot where
+    // the gradient stopped partway down and the page's own dark fallback
+    // background showed through as a flat block underneath. A
+    // `position: absolute; inset: 0` child can only reliably fill a parent
+    // whose height is definite; `.wrap` here only has a `min-height` floor
+    // and grows with content (Login's content is legitimately taller than
+    // one screen), so the child's "stretch to fill" resolution is exactly
+    // the kind of thing Safari computes differently — an element's own
+    // `background`, by contrast, always covers its own box exactly,
+    // however that box's height was arrived at, with no separate
+    // resolution step at all. The crossfade/drift layers below are purely
+    // decorative extras painted on top; if their own fill falls short on
+    // some engine, the worst case is a slightly less lively edge, never a
+    // hole down to the raw page background.
+    <div
+      className={[styles.wrap, fullHeight && styles.fullHeight, className].filter(Boolean).join(' ')}
+      style={{ background: gradientCss }}
+    >
+      {/* Decorative crossfade/drift only — isolated in their own
+          absolutely-positioned, overflow:hidden box so `.drift`'s -20px
+          bleed stays contained without that overflow rule ever being on
+          the SAME box `.content` grows inside. */}
+      <div className={styles.backdrop}>
+        <AnimatePresence>
+          {outgoing && (
+            <motion.div
+              className={styles.layer}
+              style={{ background: outgoing }}
+              initial={{ opacity: 1 }}
+              animate={{ opacity: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.45 }}
+            />
+          )}
+        </AnimatePresence>
+        <motion.div
+          className={styles.drift}
+          style={{ background: gradientCss }}
+          initial={{ x: -16, y: -16, opacity: 0.2 }}
+          animate={{ x: 12, y: 12, opacity: 0.4 }}
+          transition={{ duration: 1.4, ease: 'easeOut' }}
+        />
+      </div>
       <div ref={glowRef} className={styles.glow} style={{ '--glow-color': theme.accent }} />
       <div className={styles.content}>{children}</div>
     </div>

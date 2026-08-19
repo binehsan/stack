@@ -5,12 +5,13 @@ import { Bell, Check, Mic, Share, SquarePlus, Wifi, Zap } from 'lucide-react';
 import GradientBackground from '../components/GradientBackground';
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
+import InstallButton from '../components/InstallButton';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import styles from './Install.module.css';
 
 const WHY = [
-  { icon: Zap, text: 'No app store, no review wait, no 100MB download — a few seconds and it\'s on your home screen.' },
+  { icon: Zap, text: 'No app store, no review wait — installs in seconds, and the whole thing is under 600KB, smaller than a single photo.' },
   { icon: Bell, text: 'Real push notifications for invites and nudges, same as a native app.' },
   { icon: Mic, text: 'Add tasks by voice, right from the keyboard.' },
   { icon: Wifi, text: 'Opens instantly, works offline for anything already loaded.' },
@@ -57,6 +58,10 @@ export default function Install() {
             account, no waiting for approval, nothing to keep updated yourself. It looks, feels,
             and behaves like any other app on your phone once it's there.
           </p>
+          <div className={styles.heroActions}>
+            <InstallButton iosScrollTargetId="ios-steps" />
+          </div>
+          <p className={styles.heroStat}>Under 600KB total, and next to nothing on your data plan.</p>
         </motion.div>
       </section>
 
@@ -106,6 +111,7 @@ export default function Install() {
         </motion.div>
 
         <motion.div
+          id="ios-steps"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}

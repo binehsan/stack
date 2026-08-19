@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import { CheckCircle2, ChevronLeft, ClipboardList, LogOut } from 'lucide-react';
+import { CheckCircle2, ClipboardList, LogOut } from 'lucide-react';
 
 import Avatar from '../components/groups/Avatar';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -38,26 +38,56 @@ export default function GroupStackDetail() {
   const [nudgeTask, setNudgeTask] = useState(null);
   const [leaving, setLeaving] = useState(false);
 
-  const loadAll = useCallback(async () => {
-    setLoading(true);
-    setLoadError(null);
-    try {
-      const [stackData, taskData] = await Promise.all([
-        fetchGroupStack(stackId),
-        fetchGroupTasks(stackId),
-      ]);
-      setStack(stackData);
-      setTasks(taskData);
-    } catch (err) {
-      console.warn('Failed to load group stack:', err.message);
-      setLoadError(err.message || 'Failed to load this group stack.');
-    } finally {
-      setLoading(false);
-    }
-  }, [stackId]);
+  // `silent` skips the loading-spinner/error-state churn — used by the
+  // background poll and refocus refetch below so a new member showing up
+  // in MemberList updates quietly instead of flashing the whole page back
+  // to a spinner every time. Only the very first, real load shows that.
+  const loadAll = useCallback(
+    async (silent = false) => {
+      if (!silent) {
+        setLoading(true);
+        setLoadError(null);
+      }
+      try {
+        const [stackData, taskData] = await Promise.all([
+          fetchGroupStack(stackId),
+          fetchGroupTasks(stackId),
+        ]);
+        setStack(stackData);
+        setTasks(taskData);
+      } catch (err) {
+        console.warn('Failed to load group stack:', err.message);
+        if (!silent) setLoadError(err.message || 'Failed to load this group stack.');
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [stackId]
+  );
 
   useEffect(() => {
     loadAll();
+  }, [loadAll]);
+
+  // Keeps other members' view of this stack current when someone new
+  // accepts an invite — there's no websocket/realtime layer in this app, so
+  // this is a plain poll (catches it while the page is just sitting open)
+  // plus an immediate refetch whenever the tab/app regains focus (catches
+  // it the moment someone switches back, without waiting for the next poll
+  // tick). Both call the silent variant so a join updates MemberList
+  // quietly instead of bouncing the page back to a loading spinner.
+  useEffect(() => {
+    const interval = setInterval(() => loadAll(true), 20000);
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') loadAll(true);
+    }
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleVisibility);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleVisibility);
+    };
   }, [loadAll]);
 
   async function handleAddTask(text) {
@@ -133,9 +163,6 @@ export default function GroupStackDetail() {
   return (
     <div className={styles.page}>
       <div className={styles.headerRow}>
-        <Link to="/stacks" className={styles.backLink} aria-label="Back to Group Stacks">
-          <ChevronLeft size={20} />
-        </Link>
         <h1 className={`text-title ${styles.title}`}>{stack ? stack.name : 'Group Stack'}</h1>
       </div>
 

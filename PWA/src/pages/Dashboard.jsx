@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, ClipboardList, CloudOff, RefreshCw, Sun } from 'lucide-react';
 
+import ErrorBanner from '../components/ErrorBanner';
 import IconButton from '../components/IconButton';
 import LoadingSpinner from '../components/LoadingSpinner';
 import TaskInput from '../components/dashboard/TaskInput';
@@ -41,6 +42,13 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [justCompletedIds, setJustCompletedIds] = useState(() => new Set());
+  // Surfaces a handled failure (e.g. client.js's friendly 502/503/504
+  // message, or any other non-network API error) as a dismissable, retryable
+  // banner instead of just a console.warn — a normal inline error state, not
+  // a crash. Deliberately not wired to the optional recap/carry-forward
+  // loads, which fail silently by design; this covers the core task CRUD
+  // paths where a "server down" message actually matters to the user.
+  const [bannerError, setBannerError] = useState(null);
   const dumpTimers = useRef({});
   const reorderCommitTimer = useRef(null);
 
@@ -69,7 +77,13 @@ export default function Dashboard() {
   // a new day — show recap first, then the prompt, rather than stacking two
   // modals at once (same ordering as HomeScreen.js on mobile).
   const loadRecapThenCarryForward = useCallback(async () => {
-    const today = new Date().toISOString().slice(0, 10);
+    // Local calendar date, not `toISOString().slice(0, 10)` — that's UTC,
+    // which drifts from the user's actual "today" by however many hours
+    // they're offset from UTC. Near midnight local time that mismatch can
+    // flip the gate a day early/late relative to what the user perceives
+    // as the reset boundary.
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const lastShown = localStorage.getItem(RECAP_SHOWN_KEY);
     let recapShown = false;
 
@@ -108,8 +122,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchTasks()
-      .then(setTasks)
-      .catch((err) => console.warn('Failed to load tasks:', err.message))
+      .then((fetched) => {
+        setTasks(fetched);
+        setBannerError(null);
+      })
+      .catch((err) => {
+        console.warn('Failed to load tasks:', err.message);
+        setBannerError(err.message);
+      })
       .finally(() => setLoading(false));
 
     loadRecapThenCarryForward();
@@ -140,11 +160,22 @@ export default function Dashboard() {
     setRefreshing(true);
     try {
       setTasks(await fetchTasks());
+      setBannerError(null);
     } catch (err) {
       console.warn('Failed to refresh:', err.message);
+      setBannerError(err.message);
     } finally {
       setRefreshing(false);
     }
+  }
+
+  // Retry action for the error banner — a plain refetch covers both "the
+  // initial load failed" (nothing on screen yet) and "some later action
+  // failed" (state may have drifted, so pulling the authoritative list back
+  // down is the safe recovery either way).
+  function handleRetryError() {
+    setBannerError(null);
+    handleRefresh();
   }
 
   // Optimistic UI throughout: every action updates local state immediately,
@@ -177,6 +208,7 @@ export default function Dashboard() {
         return;
       }
       console.warn('Failed to add task:', err.message);
+      setBannerError(err.message);
       setTasks((prev) => prev.filter((t) => t.id !== tempId));
     }
   }
@@ -223,6 +255,7 @@ export default function Dashboard() {
         return;
       }
       console.warn('Failed to update task:', err.message);
+      setBannerError(err.message);
       clearDumpTimer(task.id);
       setJustCompletedIds((prev) => {
         const next = new Set(prev);
@@ -245,6 +278,7 @@ export default function Dashboard() {
         return;
       }
       console.warn('Failed to update focus star:', err.message);
+      setBannerError(err.message);
       setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, starred: task.starred } : t)));
     }
   }
@@ -287,6 +321,7 @@ export default function Dashboard() {
         return;
       }
       console.warn('Failed to delete task:', err.message);
+      setBannerError(err.message);
       setTasks(previousTasks);
     }
   }
@@ -329,6 +364,48 @@ export default function Dashboard() {
           </motion.span>
         </IconButton>
       </div>
+
+      {bannerError && (
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+          <div style={{ flex: 1 }}>
+            <ErrorBanner message={bannerError} />
+          </div>
+          <button
+            type="button"
+            onClick={handleRetryError}
+            style={{
+              flexShrink: 0,
+              background: 'transparent',
+              border: '1px solid var(--color-danger)',
+              color: 'var(--color-danger)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '6px 10px',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Retry
+          </button>
+          <button
+            type="button"
+            aria-label="Dismiss error"
+            onClick={() => setBannerError(null)}
+            style={{
+              flexShrink: 0,
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--color-danger)',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+              padding: '6px 4px',
+            }}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <TaskInput onSubmit={handleAdd} />
 

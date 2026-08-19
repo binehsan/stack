@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronLeft } from 'lucide-react';
 
 import { useAuth } from '../auth/AuthContext';
 import { createTask } from '../api/tasks';
@@ -54,7 +53,17 @@ export default function Login() {
     try {
       await login(email.trim(), password);
       await flushPendingShare();
-      navigate('/dashboard');
+      // A hard navigation, not `navigate('/dashboard')`. Android Chrome's
+      // save-password prompt (which fires right around here) draws as an OS
+      // Autofill overlay on top of the installed PWA's Activity, and that
+      // interaction can leave Chrome's toolbar stuck visible for the rest of
+      // the session — its auto-hide logic only re-arms on a scroll gesture,
+      // not on whatever internal signal dismisses the Autofill UI. A client-
+      // side route change (React Router's pushState) never touches the
+      // Activity's chrome at all, so it can't clear a stuck toolbar; a real
+      // document load re-initializes standalone display mode from scratch
+      // and does. Precached by the service worker, so this is still fast.
+      window.location.assign('/dashboard');
     } catch (err) {
       setError(err.message || 'Something went wrong, try again.');
     } finally {
@@ -65,11 +74,6 @@ export default function Login() {
   return (
     <GradientBackground>
       <div className={styles.wrap}>
-        <Link to="/" className={styles.backButton} aria-label="Back to home">
-          <ChevronLeft size={18} strokeWidth={2.5} />
-          <span>Back</span>
-        </Link>
-
         <div className={styles.inner}>
           <motion.div
             initial={{ opacity: 0, y: -10 }}

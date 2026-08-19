@@ -76,12 +76,15 @@ export default defineConfig({
         // surfaces — harmless to include, and free once you know the field
         // exists.
         categories: ['productivity', 'lifestyle'],
-        // Two purposes: 'any' icons (the plain square art) are what desktop
-        // installs and the notification tray use; 'maskable' is a separate,
-        // deliberately-padded version (generated from public/logo-mark.png,
-        // logo content kept within the inner 62% of the canvas) for
-        // Android's adaptive-icon shapes — circle, squircle, teardrop,
-        // whatever the launcher picks — to crop without clipping the logo.
+        // Plain square art, 'any' purpose only. A 'maskable' icon was tried
+        // here (padded into the inner 62% of the canvas for Android's
+        // adaptive-icon shapes) but Android launchers that support adaptive
+        // icons prefer a maskable icon when present and apply their own
+        // background/shape treatment to it — which made the icon look
+        // smaller (the deliberate safe-zone padding) with a launcher-filled
+        // background showing around the logo instead of the original
+        // edge-to-edge art. Reverted to 'any'-only so Android falls back to
+        // the plain square icon with no adaptive shaping applied.
         icons: [
           {
             src: '/icon-192.png',
@@ -94,12 +97,6 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
-          },
-          {
-            src: '/icon-maskable-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable',
           },
         ],
         // Registers Stack as a Share Target — Android's real equivalent of

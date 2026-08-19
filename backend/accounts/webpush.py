@@ -39,7 +39,27 @@ def send_web_push(subscriptions, title, body, data=None):
             if status_code in (404, 410):
                 # Gone/Not Found — the browser unsubscribed or the endpoint
                 # expired, and it will never succeed again. Clean it up now
-                # rather than retrying it on every future push.
+                # rather than retrying it on every future push. This is the
+                # common case for subscriptions registered during local dev
+                # against a `cloudflared tunnel --url` quick tunnel: every
+                # tunnel restart mints a fresh *.trycloudflare.com URL, so a
+                # subscription tied to a since-ended tunnel session is dead
+                # for good — same as any real subscription that expires or
+                # gets revoked in production.
                 subscription.delete()
             else:
                 print(f'## Web push send failed for {subscription.endpoint[:60]}...: {err}')
+        except Exception as err:  # noqa: BLE001 — deliberately broad, see below
+            # webpush() only raises WebPushException once it has a response
+            # from the push service (see pywebpush's WebPusher.send, which
+            # calls requests.post with no try/except of its own). A network-
+            # level failure — DNS not resolving, connection refused, TLS
+            # error, timeout — raises a requests exception instead, which is
+            # exactly what happens when the push service side of things is
+            # unreachable (e.g. mid-tunnel-restart during dev testing, or
+            # any transient outage in production). That's not proof the
+            # subscription is dead, so it's logged and skipped rather than
+            # deleted — but it must never propagate, or one bad/unreachable
+            # subscription would crash the whole send_web_push call and,
+            # with it, the invite/nudge endpoint that triggered it.
+            print(f'## Web push send errored for {subscription.endpoint[:60]}...: {err}')

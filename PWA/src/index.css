@@ -47,6 +47,16 @@ html {
      edge — the single biggest "this is a webpage, not an app" tell on both
      iOS Safari and Android Chrome once installed standalone. */
   overscroll-behavior: none;
+  /* `body` sets its own background below, but `html` never had one — its
+     browser-default is transparent, which reads as white. In standalone
+     mode's `black-translucent` status bar (content draws underneath it,
+     see index.html), any sliver where the WebView paints `html` itself
+     rather than `body` — the strip right at the very top edge, above/
+     around the status bar overlay — shows that default white instead of
+     the app's actual background. Matching it here closes that gap however
+     it was actually occurring, rather than chasing the exact compositing
+     mechanism on a device this can't be reproduced on locally. */
+  background: var(--gradient-3);
 }
 
 body {

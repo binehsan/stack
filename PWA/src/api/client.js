@@ -76,6 +76,18 @@ export async function request(path, options = {}, { auth = true, retry = true } 
   }
 
   if (!response.ok) {
+    // 502/503/504 mean the backend (or the proxy in front of it) is down or
+    // overloaded — that's never something a DRF error body explains, and the
+    // raw "failed with status 503" fallback below reads like a crash to a
+    // user. Give it a friendly, specific message instead, before we even
+    // try to parse a JSON body that won't exist for a gateway error.
+    if ([502, 503, 504].includes(response.status)) {
+      const error = new Error("Stack's server is down right now — try again in a bit.");
+      error.status = response.status;
+      error.isServerDown = true;
+      throw error;
+    }
+
     const fallback = `Request to ${path} failed with status ${response.status}`;
     let body;
     try {

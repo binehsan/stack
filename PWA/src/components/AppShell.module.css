@@ -7,6 +7,13 @@
 .topbar {
   display: flex;
   align-items: center;
+  /* .nav has flex:1, which is what pushes .actions to the right edge on
+     wide screens — but .nav is `display: none` below 760px (see the media
+     query), and with it gone nothing was left to push .actions anywhere,
+     so the pill just sat flush next to the logo on phone-width screens.
+     space-between is a no-op when .nav is present (it already consumes all
+     the slack via flex:1) and does the actual pushing when .nav isn't. */
+  justify-content: space-between;
   gap: var(--space-lg);
   padding: var(--space-md) var(--space-xl);
   /* Own safe-area inset, not an ancestor's — this way the topbar's
@@ -59,10 +66,17 @@
   color: var(--color-on-accent);
 }
 
+/* Groups theme-toggle/account/logout into one rounded pill so they read as
+   a single control cluster at the top-right of the header, instead of three
+   loose icon buttons floating next to each other. */
 .actions {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-soft);
+  border: 1px solid var(--color-card-border);
 }
 
 .lockBadge {
