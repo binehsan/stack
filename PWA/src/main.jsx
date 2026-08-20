@@ -1,12 +1,32 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import * as Sentry from '@sentry/react'
+import { registerSW } from 'virtual:pwa-register'
 import './index.css'
 import App from './App.jsx'
 import CrashScreen from './components/CrashScreen.jsx'
 import { initSentry } from './sentry.js'
 
 initSentry()
+
+// vite.config.js sets `injectRegister: false` specifically so this call
+// (rather than vite-plugin-pwa's own auto-injected, unwatched
+// registration script) is what actually registers sw.js — the point is
+// `onRegisterError` below, which turns a failed registration into a
+// handled, tagged, low-severity Sentry event instead of a bare unhandled
+// "Rejected" with no context. Registration failing is never fatal to the
+// app itself (Stack works the same without a service worker, just without
+// offline caching/push for that session), so this deliberately doesn't
+// retry or surface anything to the user.
+registerSW({
+  immediate: true,
+  onRegisterError(error) {
+    Sentry.captureException(error, {
+      level: 'warning',
+      tags: { area: 'service-worker-register' },
+    })
+  },
+})
 
 // Client-side routing never gets a real page load, so the browser's own
 // scroll-restoration (which assumes each navigation is a fresh document)

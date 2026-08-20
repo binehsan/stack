@@ -62,6 +62,17 @@ export default defineConfig({
         // being precached upfront.
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
       },
+      // The default `injectRegister: 'auto'` writes an inline
+      // `navigator.serviceWorker.register(...)` call straight into
+      // index.html with nothing watching its result — a rejection (seen in
+      // the wild as an unhandled "Rejected" with zero context, e.g. flaky
+      // mobile data cutting off the sw.js fetch, or a device out of
+      // storage) surfaces to Sentry as a bare, undebuggable crash instead
+      // of a handled, tagged warning. `false` here + main.jsx's own
+      // `registerSW()` call (from the `virtual:pwa-register` module) gets
+      // the same auto-registration back, just with an `onRegisterError`
+      // hook actually wired up.
+      injectRegister: false,
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png'],
       manifest: {
