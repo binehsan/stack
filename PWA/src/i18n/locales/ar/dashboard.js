@@ -1,0 +1,57 @@
+export default {
+  page: {
+    title: 'قائمتي',
+    pendingBadge: '{{count}} قيد الانتظار',
+    pendingBadgeTitle: 'ستكتمل مزامنة التغييرات بمجرد عودة الاتصال بالإنترنت',
+    refreshTasks: 'تحديث المهام',
+    retry: 'إعادة المحاولة',
+    dismiss: 'إغلاق',
+    dismissError: 'إغلاق رسالة الخطأ',
+    emptyTitle: 'لا يوجد شيء هنا بعد',
+    emptySubtitle: 'أضف مهمتك الأولى أعلاه لتبدأ قائمة اليوم.',
+    allDoneTitle: 'أنجزت كل شيء اليوم',
+    allDoneSubtitle: 'كل ما أضفته موجود في قسم المنجزات أدناه.',
+  },
+  taskInput: {
+    placeholder: 'ما الذي تحتاج إنجازه اليوم؟',
+    newTaskLabel: 'مهمة جديدة',
+    addTaskLabel: 'إضافة مهمة',
+  },
+  taskItem: {
+    dragToReorder: 'اسحب لإعادة الترتيب',
+    addToFocus: 'أضف إلى التركيز',
+    removeFromFocus: 'أزل من التركيز',
+    deleteTask: 'حذف المهمة',
+  },
+  taskList: {
+    emptyTitle: 'لا يوجد شيء في قائمتك بعد',
+    emptySubtitle: 'أضف مهمة أعلاه لتبدأ قائمة اليوم.',
+  },
+  focusSection: {
+    label: 'تركيز اليوم',
+  },
+  dumpSection: {
+    label: 'المنجزات',
+    count: '{{count}} منجزة',
+  },
+  recapModal: {
+    ariaLabel: 'ملخص الأمس',
+    heading: 'ملخص الأمس',
+    allDone: 'أنجزت القائمة كاملة. عمل رائع.',
+    mostDone: 'يوم رائع — أنجزت معظم مهامك.',
+    quietDay: 'يوم هادئ. اليوم صفحة جديدة.',
+    summary: 'إليك ملخص يوم أمس.',
+    of: 'من أصل {{total}}',
+    startToday: 'ابدأ اليوم',
+  },
+  carryForwardModal: {
+    ariaLabel: 'هل تريد ترحيل أي مهام؟',
+    heading: 'هل تريد ترحيل أي مهام؟',
+    oneTask: 'تبقّت لديك مهمة واحدة من الأمس.',
+    manyTasks: 'تبقّت لديك {{count}} مهام من الأمس.',
+    subtitleTail: 'اختر ما تريده لقائمة اليوم — الأمر اختياري تمامًا.',
+    notToday: 'ليس اليوم',
+    startFresh: 'ابدأ من جديد',
+    bringForward: 'ترحيل ({{count}})',
+  },
+};

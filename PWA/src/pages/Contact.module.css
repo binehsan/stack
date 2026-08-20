@@ -143,7 +143,7 @@
   .emailCard {
     flex-direction: column;
     align-items: flex-start;
-    text-align: left;
+    text-align: start;
   }
 
   .emailLink {

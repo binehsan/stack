@@ -5,14 +5,9 @@ import Logo from './Logo';
 import GradientBackground from './GradientBackground';
 import PermissionsPrompt from './PermissionsPrompt';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../auth/AuthContext';
 import styles from './AppShell.module.css';
-
-const NAV_ITEMS = [
-  { to: '/dashboard', label: 'My Stack', icon: LayoutList },
-  { to: '/stacks', label: 'Group Stacks', icon: Users },
-  { to: '/settings', label: 'Settings', icon: SettingsIcon },
-];
 
 // Shared authenticated-area layout — Dashboard, Group Stacks, and Settings
 // all render inside this so nav/theme-toggle/logout live in exactly one
@@ -21,7 +16,14 @@ const NAV_ITEMS = [
 export default function AppShell({ children }) {
   const { toggleTheme, themeName, isSystemTheme } = useTheme();
   const { logout } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
+
+  const NAV_ITEMS = [
+    { to: '/dashboard', label: t('common.appShell.navMyStack'), icon: LayoutList },
+    { to: '/stacks', label: t('common.appShell.navGroupStacks'), icon: Users },
+    { to: '/settings', label: t('common.appShell.navSettings'), icon: SettingsIcon },
+  ];
 
   function handleLogout() {
     logout();
@@ -31,7 +33,7 @@ export default function AppShell({ children }) {
   return (
     <GradientBackground className={styles.shell}>
       <header className={styles.topbar}>
-        <NavLink to="/dashboard" className={styles.brand} aria-label="Stack home">
+        <NavLink to="/dashboard" className={styles.brand} aria-label={t('common.appShell.homeLabel')}>
           <Logo size={32} />
         </NavLink>
 
@@ -49,18 +51,18 @@ export default function AppShell({ children }) {
         </nav>
 
         <div className={styles.actions}>
-          <button type="button" className={styles.iconButton} onClick={toggleTheme} aria-label="Toggle theme">
+          <button type="button" className={styles.iconButton} onClick={toggleTheme} aria-label={t('common.appShell.toggleTheme')}>
             {isSystemTheme ? <SunMoon size={17} /> : themeName === 'dawn' ? <Sun size={17} /> : <Moon size={17} />}
           </button>
           <button
             type="button"
             className={styles.iconButton}
             onClick={() => navigate('/settings')}
-            aria-label="Account"
+            aria-label={t('common.appShell.account')}
           >
             <CircleUser size={17} />
           </button>
-          <button type="button" className={styles.iconButton} onClick={handleLogout} aria-label="Log out">
+          <button type="button" className={styles.iconButton} onClick={handleLogout} aria-label={t('common.appShell.logOut')}>
             <LogOut size={17} />
           </button>
         </div>

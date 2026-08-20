@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 
+import { useLanguage } from '../../context/LanguageContext';
 import BottomSheet from '../BottomSheet';
 import styles from './RecapModal.module.css';
 
@@ -9,6 +10,7 @@ import styles from './RecapModal.module.css';
 // or all of it got done. Web counterpart of
 // frontend/src/components/RecapModal.js.
 export default function RecapModal({ visible, recap, onClose }) {
+  const { t } = useLanguage();
   if (!recap) return null;
 
   const { total, completed } = recap;
@@ -17,14 +19,14 @@ export default function RecapModal({ visible, recap, onClose }) {
 
   const message = celebrate
     ? completed === total
-      ? "You cleared the whole stack. Nicely done."
-      : 'Great day — most of it got done.'
+      ? t('dashboard.recapModal.allDone')
+      : t('dashboard.recapModal.mostDone')
     : completed === 0
-      ? "A quiet day. Today's a clean slate."
-      : "Here's how yesterday went.";
+      ? t('dashboard.recapModal.quietDay')
+      : t('dashboard.recapModal.summary');
 
   return (
-    <BottomSheet open={visible} dismissible={false} label="Yesterday's recap">
+    <BottomSheet open={visible} dismissible={false} label={t('dashboard.recapModal.ariaLabel')}>
       <div className={styles.card}>
         {celebrate && (
           <div className={styles.sparkleRow} aria-hidden="true">
@@ -41,19 +43,19 @@ export default function RecapModal({ visible, recap, onClose }) {
           </div>
         )}
 
-        <p className="text-tiny text-muted">Yesterday&rsquo;s recap</p>
+        <p className="text-tiny text-muted">{t('dashboard.recapModal.heading')}</p>
         <motion.p
           className={styles.tally}
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.32, delay: 0.1 }}
         >
-          {completed} <span className={styles.tallyMuted}>of {total}</span>
+          {completed} <span className={styles.tallyMuted}>{t('dashboard.recapModal.of', { total })}</span>
         </motion.p>
         <p className={`text-body ${styles.message}`}>{message}</p>
 
         <button type="button" className={styles.button} onClick={onClose}>
-          Start today
+          {t('dashboard.recapModal.startToday')}
         </button>
       </div>
     </BottomSheet>

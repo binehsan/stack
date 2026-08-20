@@ -5,11 +5,13 @@ import AuthTextField from '../AuthTextField';
 import PrimaryButton from '../PrimaryButton';
 import ErrorBanner from '../ErrorBanner';
 import { sendGroupInvite } from '../../api/groupStacks';
+import { useLanguage } from '../../context/LanguageContext';
 import styles from './InviteCard.module.css';
 
 // The collapsible "invite by @username" form on a group stack's detail
 // page — mirrors GroupStackDetailScreen's showInviteForm block.
 export default function InviteCard({ stackId }) {
+  const { t } = useLanguage();
   const [username, setUsername] = useState('');
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -19,7 +21,7 @@ export default function InviteCard({ stackId }) {
     e.preventDefault();
     const trimmed = username.trim();
     if (!trimmed) {
-      setError('Enter a username to invite.');
+      setError(t('groups.inviteCard.usernameRequired'));
       return;
     }
     setError(null);
@@ -27,10 +29,10 @@ export default function InviteCard({ stackId }) {
     setSending(true);
     try {
       await sendGroupInvite(stackId, trimmed);
-      setSuccess(`Invited @${trimmed.replace(/^@/, '').toLowerCase()}`);
+      setSuccess(t('groups.inviteCard.invited', { username: trimmed.replace(/^@/, '').toLowerCase() }));
       setUsername('');
     } catch (err) {
-      setError(err.message || 'Something went wrong, try again.');
+      setError(err.message || t('groups.inviteCard.genericError'));
     } finally {
       setSending(false);
     }
@@ -51,14 +53,14 @@ export default function InviteCard({ stackId }) {
         <div className={styles.row}>
           <div className={styles.field}>
             <AuthTextField
-              label="Invite by username"
+              label={t('groups.inviteCard.fieldLabel')}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="username"
+              placeholder={t('groups.inviteCard.placeholder')}
               autoComplete="off"
             />
           </div>
-          <PrimaryButton type="submit" title="Send invite" loading={sending} />
+          <PrimaryButton type="submit" title={t('groups.inviteCard.sendButton')} loading={sending} />
         </div>
       </div>
     </motion.form>

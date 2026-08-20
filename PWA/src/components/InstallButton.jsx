@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import PrimaryButton from './PrimaryButton';
 import { useInstallPrompt } from '../pwa/useInstallPrompt';
+import { useLanguage } from '../context/LanguageContext';
 
 // One button, three behaviors depending on what the platform actually
 // allows: a real one-click native install on Chrome/Edge/Android (once
@@ -13,11 +14,19 @@ import { useInstallPrompt } from '../pwa/useInstallPrompt';
 export default function InstallButton({ variant = 'solid', iosScrollTargetId, className }) {
   const { canPromptInstall, isIOS, installed, promptInstall } = useInstallPrompt();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   if (installed) return null;
 
   if (canPromptInstall) {
-    return <PrimaryButton variant={variant} title="Install Stack" onClick={promptInstall} className={className} />;
+    return (
+      <PrimaryButton
+        variant={variant}
+        title={t('common.installButton.installStack')}
+        onClick={promptInstall}
+        className={className}
+      />
+    );
   }
 
   if (isIOS) {
@@ -28,7 +37,14 @@ export default function InstallButton({ variant = 'solid', iosScrollTargetId, cl
         navigate('/install');
       }
     }
-    return <PrimaryButton variant={variant} title="Add to Home Screen" onClick={handleIOSClick} className={className} />;
+    return (
+      <PrimaryButton
+        variant={variant}
+        title={t('common.installButton.addToHomeScreen')}
+        onClick={handleIOSClick}
+        className={className}
+      />
+    );
   }
 
   return (
@@ -36,7 +52,7 @@ export default function InstallButton({ variant = 'solid', iosScrollTargetId, cl
       as={Link}
       to="/install"
       variant={variant === 'solid' ? 'ghost' : variant}
-      title="How to install"
+      title={t('common.installButton.howToInstall')}
       className={className}
     />
   );

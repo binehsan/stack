@@ -1,0 +1,57 @@
+export default {
+  page: {
+    title: 'My Stack',
+    pendingBadge: '{{count}} pending',
+    pendingBadgeTitle: "Changes will finish syncing once you're back online",
+    refreshTasks: 'Refresh tasks',
+    retry: 'Retry',
+    dismiss: 'Dismiss',
+    dismissError: 'Dismiss error',
+    emptyTitle: 'Nothing here yet',
+    emptySubtitle: "Add your first task above to start today's stack.",
+    allDoneTitle: 'All done for today',
+    allDoneSubtitle: 'Everything you added is in the Dump below.',
+  },
+  taskInput: {
+    placeholder: "What's on your plate today?",
+    newTaskLabel: 'New task',
+    addTaskLabel: 'Add task',
+  },
+  taskItem: {
+    dragToReorder: 'Drag to reorder',
+    addToFocus: 'Add to focus',
+    removeFromFocus: 'Remove from focus',
+    deleteTask: 'Delete task',
+  },
+  taskList: {
+    emptyTitle: 'Nothing on your plate yet',
+    emptySubtitle: "Add a task above to start today's stack.",
+  },
+  focusSection: {
+    label: "Today's focus",
+  },
+  dumpSection: {
+    label: 'Dump',
+    count: '{{count}} done',
+  },
+  recapModal: {
+    ariaLabel: "Yesterday's recap",
+    heading: "Yesterday's recap",
+    allDone: 'You cleared the whole stack. Nicely done.',
+    mostDone: 'Great day — most of it got done.',
+    quietDay: "A quiet day. Today's a clean slate.",
+    summary: "Here's how yesterday went.",
+    of: 'of {{total}}',
+    startToday: 'Start today',
+  },
+  carryForwardModal: {
+    ariaLabel: 'Bring anything forward?',
+    heading: 'Bring anything forward?',
+    oneTask: 'You had 1 task left over from yesterday.',
+    manyTasks: 'You had {{count}} tasks left over from yesterday.',
+    subtitleTail: "Pick any you'd like on today's stack — totally optional.",
+    notToday: 'Not today',
+    startFresh: 'Start fresh',
+    bringForward: 'Bring forward ({{count}})',
+  },
+};

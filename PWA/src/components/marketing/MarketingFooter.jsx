@@ -2,9 +2,11 @@ import { Link } from 'react-router-dom';
 
 import Logo from '../Logo';
 import SyntaxCredit from '../SyntaxCredit';
+import { useLanguage } from '../../context/LanguageContext';
 import styles from './MarketingFooter.module.css';
 
 export default function MarketingFooter() {
+  const { t } = useLanguage();
   const year = new Date().getFullYear();
 
   return (
@@ -15,20 +17,20 @@ export default function MarketingFooter() {
             <Logo size={28} />
             <span className={styles.brandName}>Stack</span>
           </Link>
-          <p className={styles.tagline}>&ldquo;Your stack, wherever u are.&rdquo;</p>
+          <p className={styles.tagline}>{t('marketing.footer.tagline')}</p>
         </div>
 
         <nav className={styles.links}>
-          <Link to="/features" className={styles.link}>Features</Link>
-          <Link to="/install" className={styles.link}>Install</Link>
-          <Link to="/about" className={styles.link}>About</Link>
-          <Link to="/login" className={styles.link}>Log in</Link>
-          <Link to="/signup" className={styles.link}>Get started</Link>
-          <Link to="/privacy" className={styles.link}>Privacy</Link>
+          <Link to="/features" className={styles.link}>{t('marketing.footer.features')}</Link>
+          <Link to="/install" className={styles.link}>{t('marketing.footer.install')}</Link>
+          <Link to="/about" className={styles.link}>{t('marketing.footer.about')}</Link>
+          <Link to="/login" className={styles.link}>{t('marketing.footer.login')}</Link>
+          <Link to="/signup" className={styles.link}>{t('marketing.footer.getStarted')}</Link>
+          <Link to="/privacy" className={styles.link}>{t('marketing.footer.privacy')}</Link>
         </nav>
       </div>
 
-      <p className={styles.copyright}>&copy; {year} Stack. Made for calm todo lists.</p>
+      <p className={styles.copyright}>{t('marketing.footer.copyright', { year })}</p>
       <SyntaxCredit />
     </footer>
   );

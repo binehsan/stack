@@ -20,6 +20,18 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Stack" />
+    <!-- Arabic/Urdu web fonts — LanguageContext toggles `document.documentElement.dataset.lang`,
+         and index.css's `html[data-lang="ar"]`/`html[data-lang="ur"]` rules pick these up.
+         Baloo Bhaijaan 2 is a rounded-terminal Arabic display face (Cairo as its fallback for
+         weights it lacks) standing in for the licensed "DIN Next Rounded Arabic" — swap in the
+         real font's @font-face + files here if/when that license is purchased. Noto Nastaliq
+         Urdu is the genuine free Nastaliq webfont, no substitute needed. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400..800&family=Cairo:wght@400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400..700&display=swap"
+      rel="stylesheet"
+    />
     <title>Stack — your tasks, together</title>
   </head>
   <body>

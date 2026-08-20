@@ -5,6 +5,7 @@ import { CheckCircle2, ClipboardList, CloudOff, RefreshCw, Sun } from 'lucide-re
 import ErrorBanner from '../components/ErrorBanner';
 import IconButton from '../components/IconButton';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useLanguage } from '../context/LanguageContext';
 import TaskInput from '../components/dashboard/TaskInput';
 import FocusSection from '../components/dashboard/FocusSection';
 import TaskList from '../components/dashboard/TaskList';
@@ -38,6 +39,7 @@ const DUMP_DELAY_MS = 320;
 // optimistic local state synced to the backend in the background, with
 // rollback on failure — same data flow as frontend/src/screens/HomeScreen.js.
 export default function Dashboard() {
+  const { t } = useLanguage();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -342,15 +344,15 @@ export default function Dashboard() {
     <div className={styles.page}>
       <div className={styles.headerRow}>
         <div className={styles.headerTitleGroup}>
-          <h1 className="text-header">My Stack</h1>
+          <h1 className="text-header">{t('dashboard.page.title')}</h1>
           {pendingCount > 0 && (
-            <span className={styles.pendingBadge} title="Changes will finish syncing once you're back online">
+            <span className={styles.pendingBadge} title={t('dashboard.page.pendingBadgeTitle')}>
               <CloudOff size={13} strokeWidth={2.25} />
-              {pendingCount} pending
+              {t('dashboard.page.pendingBadge', { count: pendingCount })}
             </span>
           )}
         </div>
-        <IconButton label="Refresh tasks" onClick={handleRefresh} disabled={refreshing} size={36}>
+        <IconButton label={t('dashboard.page.refreshTasks')} onClick={handleRefresh} disabled={refreshing} size={36}>
           <motion.span
             animate={{ rotate: refreshing ? 360 : 0 }}
             transition={
@@ -385,11 +387,11 @@ export default function Dashboard() {
               cursor: 'pointer',
             }}
           >
-            Retry
+            {t('dashboard.page.retry')}
           </button>
           <button
             type="button"
-            aria-label="Dismiss error"
+            aria-label={t('dashboard.page.dismissError')}
             onClick={() => setBannerError(null)}
             style={{
               flexShrink: 0,
@@ -402,7 +404,7 @@ export default function Dashboard() {
               padding: '6px 4px',
             }}
           >
-            Dismiss
+            {t('dashboard.page.dismiss')}
           </button>
         </div>
       )}
@@ -420,9 +422,9 @@ export default function Dashboard() {
           {hasNoTasksAtAll ? (
             <div className={styles.emptyState}>
               <ClipboardList size={40} strokeWidth={1.5} className={styles.emptyIcon} />
-              <p className="text-body-strong">Nothing here yet</p>
+              <p className="text-body-strong">{t('dashboard.page.emptyTitle')}</p>
               <p className={`text-small text-muted ${styles.emptySubtitle}`}>
-                Add your first task above to start today&rsquo;s stack.
+                {t('dashboard.page.emptySubtitle')}
               </p>
             </div>
           ) : (
@@ -435,9 +437,9 @@ export default function Dashboard() {
                 onReorder={handleReorder}
                 {...starProps}
                 EmptyIcon={doneTasks.length > 0 ? CheckCircle2 : Sun}
-                emptyTitle={doneTasks.length > 0 ? 'All done for today' : undefined}
+                emptyTitle={doneTasks.length > 0 ? t('dashboard.page.allDoneTitle') : undefined}
                 emptySubtitle={
-                  doneTasks.length > 0 ? 'Everything you added is in the Dump below.' : undefined
+                  doneTasks.length > 0 ? t('dashboard.page.allDoneSubtitle') : undefined
                 }
               />
               <DumpSection tasks={doneTasks} onToggle={handleToggle} onDelete={handleDelete} {...starProps} />

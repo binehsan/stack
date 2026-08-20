@@ -4,6 +4,7 @@ import { AlertTriangle } from 'lucide-react';
 import AuthTextField from '../AuthTextField';
 import PrimaryButton from '../PrimaryButton';
 import ErrorBanner from '../ErrorBanner';
+import { useLanguage } from '../../context/LanguageContext';
 import styles from './DangerZone.module.css';
 
 // Two layers between a click and an irreversible delete: the password
@@ -13,6 +14,7 @@ import styles from './DangerZone.module.css';
 // are passed in from Settings (deleteAccount from useAuth(), onDeleted
 // navigates to `/`).
 export default function DangerZone({ deleteAccount, onDeleted }) {
+  const { t } = useLanguage();
   const [password, setPassword] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -21,7 +23,7 @@ export default function DangerZone({ deleteAccount, onDeleted }) {
   function handleRequestDelete(event) {
     event.preventDefault();
     if (!password) {
-      setError('Enter your password to confirm.');
+      setError(t('settings.dangerZone.enterPasswordError'));
       return;
     }
     setError(null);
@@ -29,9 +31,7 @@ export default function DangerZone({ deleteAccount, onDeleted }) {
   }
 
   async function handleConfirmDelete() {
-    const confirmed = window.confirm(
-      'This permanently deletes your account, tasks, and group stacks. This cannot be undone. Continue?'
-    );
+    const confirmed = window.confirm(t('settings.dangerZone.confirmDialogText'));
     if (!confirmed) return;
 
     setError(null);
@@ -40,7 +40,7 @@ export default function DangerZone({ deleteAccount, onDeleted }) {
       await deleteAccount(password);
       onDeleted?.();
     } catch (err) {
-      setError(err.message || 'Failed to delete account.');
+      setError(err.message || t('settings.dangerZone.failedDelete'));
       setDeleting(false);
       setConfirming(false);
     }
@@ -50,40 +50,37 @@ export default function DangerZone({ deleteAccount, onDeleted }) {
     <div className={styles.wrap}>
       <div className={styles.header}>
         <AlertTriangle size={16} className={styles.icon} />
-        <h3 className="text-body-strong">Danger zone</h3>
+        <h3 className="text-body-strong">{t('settings.dangerZone.heading')}</h3>
       </div>
-      <p className="text-small text-muted">
-        Deleting your account permanently removes your tasks, group stacks, and profile. This
-        can't be undone.
-      </p>
+      <p className="text-small text-muted">{t('settings.dangerZone.description')}</p>
 
       <ErrorBanner message={error} />
 
       {!confirming ? (
         <form onSubmit={handleRequestDelete} className={styles.form}>
           <AuthTextField
-            label="Password"
+            label={t('settings.dangerZone.password')}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Confirm your password"
+            placeholder={t('settings.dangerZone.confirmPassword')}
             autoComplete="current-password"
           />
-          <PrimaryButton type="submit" title="Delete account" variant="danger" />
+          <PrimaryButton type="submit" title={t('settings.dangerZone.deleteAccount')} variant="danger" />
         </form>
       ) : (
         <div className={styles.confirmRow}>
-          <p className="text-small">Are you absolutely sure? This is permanent.</p>
+          <p className="text-small">{t('settings.dangerZone.confirmPrompt')}</p>
           <div className={styles.confirmActions}>
             <PrimaryButton
               variant="ghost"
-              title="Cancel"
+              title={t('settings.dangerZone.cancel')}
               onClick={() => setConfirming(false)}
               disabled={deleting}
             />
             <PrimaryButton
               variant="danger"
-              title="Yes, delete my account"
+              title={t('settings.dangerZone.yesDelete')}
               onClick={handleConfirmDelete}
               loading={deleting}
             />

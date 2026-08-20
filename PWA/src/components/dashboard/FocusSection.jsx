@@ -1,5 +1,6 @@
 import { Star } from 'lucide-react';
 
+import { useLanguage } from '../../context/LanguageContext';
 import styles from './FocusSection.module.css';
 
 const MAX_FOCUS = 3;
@@ -9,6 +10,7 @@ const MAX_FOCUS = 3;
 // zero stars (this section just doesn't render). Web port of
 // frontend/src/components/FocusSection.js.
 export default function FocusSection({ tasks, onToggle }) {
+  const { t } = useLanguage();
   const starred = tasks.filter((task) => task.starred);
 
   if (starred.length === 0) return null;
@@ -18,7 +20,7 @@ export default function FocusSection({ tasks, onToggle }) {
       <div className={styles.headerRow}>
         <div className={styles.labelRow}>
           <Star size={14} className={styles.starIcon} fill="currentColor" />
-          <span className={`text-small ${styles.label}`}>Today&rsquo;s focus</span>
+          <span className={`text-small ${styles.label}`}>{t('dashboard.focusSection.label')}</span>
         </div>
         <span className="text-tiny text-muted">
           {starred.length}/{MAX_FOCUS}

@@ -4,6 +4,7 @@ import { Award, Bell, BellOff, Calendar, CheckCircle2, Moon, Star, Sun, SunMoon,
 
 import { useAuth } from '../auth/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { fetchProfile, updateProfile } from '../api/auth';
 import { fetchStats } from '../api/tasks';
 import { usePushSubscription } from '../push/usePushSubscription';
@@ -14,6 +15,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import ErrorBanner from '../components/ErrorBanner';
 import AvatarUpload from '../components/settings/AvatarUpload';
 import ThemeFamilyPicker from '../components/settings/ThemeFamilyPicker';
+import LanguagePicker from '../components/settings/LanguagePicker';
 import DangerZone from '../components/settings/DangerZone';
 import StatTile from '../components/StatTile';
 import SyntaxCredit from '../components/SyntaxCredit';
@@ -26,16 +28,17 @@ function formatDate(isoDateOnly) {
   return parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-const MODE_LABEL = {
-  system: 'Matches your device',
-  dawn: 'Light',
-  dusk: 'Dark',
-};
-
 export default function Settings() {
   const { email, changePassword, deleteAccount } = useAuth();
   const { themeName, themePreference, isSystemTheme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
   const navigate = useNavigate();
+
+  const MODE_LABEL = {
+    system: t('settings.appearance.modeSystem'),
+    dawn: t('settings.appearance.modeLight'),
+    dusk: t('settings.appearance.modeDark'),
+  };
 
   // Profile (avatar + username)
   const [profile, setProfile] = useState(null);
@@ -56,7 +59,7 @@ export default function Settings() {
         setUsernameInput(data.username || '');
       })
       .catch((err) => {
-        if (!cancelled) setProfileError(err.message || 'Failed to load profile.');
+        if (!cancelled) setProfileError(err.message || t('settings.profile.errors.failedLoad'));
       })
       .finally(() => {
         if (!cancelled) setProfileLoading(false);
@@ -76,7 +79,7 @@ export default function Settings() {
     event.preventDefault();
     const trimmed = usernameInput.trim();
     if (!trimmed) {
-      setUsernameError('Username cannot be empty.');
+      setUsernameError(t('settings.profile.errors.usernameEmpty'));
       return;
     }
     setUsernameError(null);
@@ -87,7 +90,7 @@ export default function Settings() {
       setProfile(updated);
       setUsernameSuccess(true);
     } catch (err) {
-      setUsernameError(err.message || 'Failed to update username.');
+      setUsernameError(err.message || t('settings.profile.errors.failedUpdate'));
     } finally {
       setUsernameSaving(false);
     }
@@ -104,12 +107,12 @@ export default function Settings() {
   async function handleChangePassword(event) {
     event.preventDefault();
     if (!oldPassword || !newPassword || !newPasswordConfirm) {
-      setPasswordError('Fill in all password fields.');
+      setPasswordError(t('settings.account.errors.fillAll'));
       setPasswordSuccess(false);
       return;
     }
     if (newPassword !== newPasswordConfirm) {
-      setPasswordError("New passwords don't match.");
+      setPasswordError(t('settings.account.errors.mismatch'));
       setPasswordSuccess(false);
       return;
     }
@@ -123,7 +126,7 @@ export default function Settings() {
       setNewPassword('');
       setNewPasswordConfirm('');
     } catch (err) {
-      setPasswordError(err.message || 'Failed to change password.');
+      setPasswordError(err.message || t('settings.account.errors.failedChange'));
     } finally {
       setPasswordSaving(false);
     }
@@ -152,12 +155,12 @@ export default function Settings() {
 
   return (
     <div className={styles.page}>
-      <h1 className="text-header">Settings</h1>
+      <h1 className="text-header">{t('settings.page.title')}</h1>
 
       <Card className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2 className="text-title">Profile</h2>
-          <p className="text-small text-muted">Your avatar, username, and account email.</p>
+          <h2 className="text-title">{t('settings.profile.heading')}</h2>
+          <p className="text-small text-muted">{t('settings.profile.description')}</p>
         </div>
 
         <ErrorBanner message={profileError} />
@@ -170,22 +173,22 @@ export default function Settings() {
 
             <form onSubmit={handleSaveUsername} className={styles.usernameForm}>
               <AuthTextField
-                label="Username"
+                label={t('settings.profile.usernameLabel')}
                 value={usernameInput}
                 onChange={(e) => {
                   setUsernameInput(e.target.value);
                   setUsernameSuccess(false);
                 }}
                 error={usernameError}
-                placeholder="username"
+                placeholder={t('settings.profile.usernamePlaceholder')}
                 autoComplete="username"
               />
-              {usernameSuccess && <p className={styles.success}>Username updated.</p>}
-              <PrimaryButton type="submit" title="Save username" loading={usernameSaving} />
+              {usernameSuccess && <p className={styles.success}>{t('settings.profile.usernameUpdated')}</p>}
+              <PrimaryButton type="submit" title={t('settings.profile.saveUsername')} loading={usernameSaving} />
             </form>
 
             <div className={styles.readonlyRow}>
-              <span className="text-small text-muted">Email</span>
+              <span className="text-small text-muted">{t('settings.profile.emailLabel')}</span>
               <span className="text-body">{email}</span>
             </div>
           </>
@@ -194,8 +197,8 @@ export default function Settings() {
 
       <Card className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2 className="text-title">Your stats</h2>
-          <p className="text-small text-muted">Streaks and totals, updated live.</p>
+          <h2 className="text-title">{t('settings.stats.heading')}</h2>
+          <p className="text-small text-muted">{t('settings.stats.description')}</p>
         </div>
 
         {statsLoading ? (
@@ -205,23 +208,23 @@ export default function Settings() {
             <StatTile
               Icon={Zap}
               value={stats.current_streak}
-              label="Hot Streak"
-              sublabel={stats.current_streak === 1 ? 'day' : 'days'}
+              label={t('settings.stats.hotStreak')}
+              sublabel={stats.current_streak === 1 ? t('settings.stats.day') : t('settings.stats.days')}
             />
             <StatTile
               Icon={Award}
               value={stats.longest_streak}
-              label="Record Streak"
-              sublabel={stats.longest_streak === 1 ? 'day' : 'days'}
+              label={t('settings.stats.recordStreak')}
+              sublabel={stats.longest_streak === 1 ? t('settings.stats.day') : t('settings.stats.days')}
               delay={0.04}
             />
-            <StatTile Icon={CheckCircle2} value={stats.total_completed} label="Tasks Crushed" delay={0.08} />
-            <StatTile Icon={Calendar} value={stats.days_active} label="Stack Sessions" delay={0.12} />
+            <StatTile Icon={CheckCircle2} value={stats.total_completed} label={t('settings.stats.tasksCrushed')} delay={0.08} />
+            <StatTile Icon={Calendar} value={stats.days_active} label={t('settings.stats.stackSessions')} delay={0.12} />
             {stats.best_day && (
               <StatTile
                 Icon={Star}
                 value={stats.best_day.completed}
-                label="Best Day Ever"
+                label={t('settings.stats.bestDayEver')}
                 sublabel={formatDate(stats.best_day.date)}
                 delay={0.16}
               />
@@ -232,33 +235,31 @@ export default function Settings() {
 
       <Card className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2 className="text-title">Notifications</h2>
-          <p className="text-small text-muted">Group invites and nudges, pushed to this device.</p>
+          <h2 className="text-title">{t('settings.notifications.heading')}</h2>
+          <p className="text-small text-muted">{t('settings.notifications.description')}</p>
         </div>
 
         {!supported ? (
-          <p className="text-small text-muted">
-            This browser doesn&rsquo;t support push notifications for installed apps.
-          </p>
+          <p className="text-small text-muted">{t('settings.notifications.unsupported')}</p>
         ) : (
           <>
             <ErrorBanner message={pushError} />
             {permission === 'denied' ? (
-              <p className="text-small text-muted">
-                Notifications are blocked for Stack in your browser settings — enable them there to turn this on.
-              </p>
+              <p className="text-small text-muted">{t('settings.notifications.blocked')}</p>
             ) : (
               <div className={styles.modeRow}>
                 <div className={styles.modeInfo}>
-                  <span className="text-small text-muted">Push notifications</span>
-                  <span className="text-body-strong">{subscribed ? 'On' : 'Off'}</span>
+                  <span className="text-small text-muted">{t('settings.notifications.pushNotifications')}</span>
+                  <span className="text-body-strong">
+                    {subscribed ? t('settings.notifications.on') : t('settings.notifications.off')}
+                  </span>
                 </div>
                 <PrimaryButton
                   variant="ghost"
                   title={
                     <span className={styles.modeButtonLabel}>
                       {subscribed ? <BellOff size={16} /> : <Bell size={16} />}
-                      {subscribed ? 'Turn off' : 'Turn on'}
+                      {subscribed ? t('settings.notifications.turnOff') : t('settings.notifications.turnOn')}
                     </span>
                   }
                   onClick={subscribed ? unsubscribe : subscribe}
@@ -272,23 +273,23 @@ export default function Settings() {
 
       <Card className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2 className="text-title">Appearance</h2>
-          <p className="text-small text-muted">Pick a color family and light/dark mode.</p>
+          <h2 className="text-title">{t('settings.appearance.heading')}</h2>
+          <p className="text-small text-muted">{t('settings.appearance.description')}</p>
         </div>
 
         <ThemeFamilyPicker />
 
         <div className={styles.modeRow}>
           <div className={styles.modeInfo}>
-            <span className="text-small text-muted">Mode</span>
-            <span className="text-body-strong">{MODE_LABEL[themePreference] || 'System'}</span>
+            <span className="text-small text-muted">{t('settings.appearance.mode')}</span>
+            <span className="text-body-strong">{MODE_LABEL[themePreference] || MODE_LABEL.system}</span>
           </div>
           <PrimaryButton
             variant="ghost"
             title={
               <span className={styles.modeButtonLabel}>
                 <ModeIcon size={16} />
-                Change mode
+                {t('settings.appearance.changeMode')}
               </span>
             }
             onClick={toggleTheme}
@@ -298,41 +299,50 @@ export default function Settings() {
 
       <Card className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2 className="text-title">Account</h2>
-          <p className="text-small text-muted">Change your password, or delete your account.</p>
+          <h2 className="text-title">{t('settings.language.heading')}</h2>
+          <p className="text-small text-muted">{t('settings.language.description')}</p>
+        </div>
+
+        <LanguagePicker />
+      </Card>
+
+      <Card className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2 className="text-title">{t('settings.account.heading')}</h2>
+          <p className="text-small text-muted">{t('settings.account.description')}</p>
         </div>
 
         <form onSubmit={handleChangePassword} className={styles.passwordForm}>
           <AuthTextField
-            label="Current password"
+            label={t('settings.account.currentPassword')}
             type="password"
             value={oldPassword}
             onChange={(e) => setOldPassword(e.target.value)}
             autoComplete="current-password"
           />
           <AuthTextField
-            label="New password"
+            label={t('settings.account.newPassword')}
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             autoComplete="new-password"
           />
           <AuthTextField
-            label="Confirm new password"
+            label={t('settings.account.confirmNewPassword')}
             type="password"
             value={newPasswordConfirm}
             onChange={(e) => setNewPasswordConfirm(e.target.value)}
             autoComplete="new-password"
           />
           <ErrorBanner message={passwordError} />
-          {passwordSuccess && <p className={styles.success}>Password changed.</p>}
-          <PrimaryButton type="submit" title="Change password" loading={passwordSaving} />
+          {passwordSuccess && <p className={styles.success}>{t('settings.account.passwordChanged')}</p>}
+          <PrimaryButton type="submit" title={t('settings.account.changePassword')} loading={passwordSaving} />
         </form>
 
         <DangerZone deleteAccount={deleteAccount} onDeleted={handleAccountDeleted} />
       </Card>
 
-      <SyntaxCredit detail="App by Muhammad Amen Ehsan" />
+      <SyntaxCredit detail={t('settings.credit')} />
     </div>
   );
 }

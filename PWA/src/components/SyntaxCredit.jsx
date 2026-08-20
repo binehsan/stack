@@ -1,4 +1,5 @@
 import syntaxLogo from '../assets/syntax-logo.png';
+import { useLanguage } from '../context/LanguageContext';
 import styles from './SyntaxCredit.module.css';
 
 // Web port of frontend/src/components/SyntaxFooter.js — "A project of
@@ -10,11 +11,12 @@ import styles from './SyntaxCredit.module.css';
 // surface keeps this legible regardless of theme or scroll position — same
 // principle applied everywhere else text sits over the animated background.
 export default function SyntaxCredit({ detail }) {
+  const { t } = useLanguage();
   return (
     <div className={styles.wrap}>
-      <img src={syntaxLogo} alt="Syntax" className={styles.logo} />
+      <img src={syntaxLogo} alt={t('common.syntaxCredit.alt')} className={styles.logo} />
       <div className={styles.plate}>
-        <span className={styles.text}>A project of Syntax</span>
+        <span className={styles.text}>{t('common.syntaxCredit.text')}</span>
         {detail && <span className={styles.detail}>{detail}</span>}
       </div>
     </div>

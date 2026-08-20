@@ -15,6 +15,7 @@ import {
   respondToGroupInvite,
 } from '../api/groupStacks';
 import { setBadgeCount } from '../push/badge';
+import { useLanguage } from '../context/LanguageContext';
 import styles from './GroupStacks.module.css';
 
 // The "hub" for group stacks: every stack you're already in (click to
@@ -22,6 +23,7 @@ import styles from './GroupStacks.module.css';
 // counterpart of frontend/src/screens/GroupStacksScreen.js.
 export default function GroupStacks() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [loading, setLoading] = useState(true);
   const [stacks, setStacks] = useState([]);
@@ -60,7 +62,7 @@ export default function GroupStacks() {
     e.preventDefault();
     const name = createName.trim();
     if (!name) {
-      setCreateError('Give your group stack a name.');
+      setCreateError(t('groups.groupStacks.createNameError'));
       return;
     }
     setCreateError(null);
@@ -95,8 +97,8 @@ export default function GroupStacks() {
 
   return (
     <div className={styles.page}>
-      <h1 className="text-header">Group Stacks</h1>
-      <p className={`text-small ${styles.tagline}`}>Your stack, wherever u are</p>
+      <h1 className="text-header">{t('groups.groupStacks.heading')}</h1>
+      <p className={`text-small ${styles.tagline}`}>{t('groups.groupStacks.tagline')}</p>
 
       {loading ? (
         <div className={styles.loadingWrap}>
@@ -106,7 +108,7 @@ export default function GroupStacks() {
         <>
           {stacks.length > 0 && (
             <section className={styles.section}>
-              <h2 className={`text-tiny ${styles.sectionLabel}`}>Your stacks</h2>
+              <h2 className={`text-tiny ${styles.sectionLabel}`}>{t('groups.groupStacks.sectionYourStacks')}</h2>
               <div>
                 {stacks.map((stack, index) => (
                   <motion.div
@@ -120,7 +122,9 @@ export default function GroupStacks() {
                       <div className={styles.stackRowText}>
                         <p className={`text-body-strong ${styles.stackRowName}`}>{stack.name}</p>
                         <p className={`text-small ${styles.stackRowMeta}`}>
-                          {stack.members.length} member{stack.members.length === 1 ? '' : 's'}
+                          {stack.members.length === 1
+                            ? t('groups.groupStacks.memberOne')
+                            : t('groups.groupStacks.memberOther', { count: stack.members.length })}
                         </p>
                       </div>
                       <ChevronRight size={20} className={styles.chevron} />
@@ -133,7 +137,7 @@ export default function GroupStacks() {
 
           {invites.length > 0 && (
             <section className={styles.section}>
-              <h2 className={`text-tiny ${styles.sectionLabel}`}>Pending invites</h2>
+              <h2 className={`text-tiny ${styles.sectionLabel}`}>{t('groups.groupStacks.pendingInvitesLabel')}</h2>
               <AnimatePresence initial={false}>
                 {invites.map((invite) => (
                   <motion.div
@@ -146,9 +150,10 @@ export default function GroupStacks() {
                     className={styles.inviteCard}
                   >
                     <p className={`text-small ${styles.inviteCardText}`}>
-                      <span className={styles.inviteCardStrong}>@{invite.invited_by_username}</span>{' '}
-                      invited you to{' '}
-                      <span className={styles.inviteCardStrong}>{invite.stack_name}</span>
+                      {t('groups.groupStacks.invitedYouTo', {
+                        username: `@${invite.invited_by_username}`,
+                        stackName: invite.stack_name,
+                      })}
                     </p>
                     <div className={styles.inviteActions}>
                       <button
@@ -157,7 +162,7 @@ export default function GroupStacks() {
                         onClick={() => handleRespond(invite, 'decline')}
                         disabled={respondingId === invite.id}
                       >
-                        Decline
+                        {t('groups.groupStacks.decline')}
                       </button>
                       <button
                         type="button"
@@ -165,7 +170,7 @@ export default function GroupStacks() {
                         onClick={() => handleRespond(invite, 'accept')}
                         disabled={respondingId === invite.id}
                       >
-                        {respondingId === invite.id ? 'Joining…' : 'Accept'}
+                        {respondingId === invite.id ? t('groups.groupStacks.joining') : t('groups.groupStacks.accept')}
                       </button>
                     </div>
                   </motion.div>
@@ -177,25 +182,22 @@ export default function GroupStacks() {
           {stacks.length === 0 && invites.length === 0 && (
             <div className={styles.emptyState}>
               <Users size={40} strokeWidth={1.5} className={styles.emptyIcon} />
-              <p className={`text-body-strong ${styles.emptyTitle}`}>No group stacks yet</p>
-              <p className={`text-small ${styles.emptySubtitle}`}>
-                Create one to share a task list with family, friends, roommates, anyone. Everyone
-                can add items and see who's on the hook.
-              </p>
+              <p className={`text-body-strong ${styles.emptyTitle}`}>{t('groups.groupStacks.emptyTitle')}</p>
+              <p className={`text-small ${styles.emptySubtitle}`}>{t('groups.groupStacks.emptyBody')}</p>
             </div>
           )}
 
           <section className={styles.createSection}>
-            <h2 className={`text-tiny ${styles.sectionLabel}`}>Create a new stack</h2>
+            <h2 className={`text-tiny ${styles.sectionLabel}`}>{t('groups.groupStacks.createSectionLabel')}</h2>
             <ErrorBanner message={createError} />
             <form onSubmit={handleCreate}>
               <AuthTextField
-                label="Stack name"
+                label={t('groups.groupStacks.stackNameLabel')}
                 value={createName}
                 onChange={(e) => setCreateName(e.target.value)}
-                placeholder="The Smiths, College Friends…"
+                placeholder={t('groups.groupStacks.stackNamePlaceholder')}
               />
-              <PrimaryButton type="submit" title="Create group stack" loading={creating} />
+              <PrimaryButton type="submit" title={t('groups.groupStacks.createButton')} loading={creating} />
             </form>
           </section>
         </>

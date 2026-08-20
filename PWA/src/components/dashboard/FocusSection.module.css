@@ -38,7 +38,7 @@
   padding: var(--space-xs) 0;
   margin: 0;
   cursor: pointer;
-  text-align: left;
+  text-align: start;
   font: inherit;
   color: inherit;
 }
@@ -48,7 +48,7 @@
   height: 8px;
   border-radius: 50%;
   background: var(--color-accent);
-  margin-right: var(--space-sm);
+  margin-inline-end: var(--space-sm);
   flex-shrink: 0;
 }
 

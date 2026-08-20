@@ -95,7 +95,7 @@
 
   .menuButton {
     display: flex;
-    margin-left: auto;
+    margin-inline-start: auto;
   }
 
   .mobileMenu {

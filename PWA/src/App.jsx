@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useOutlet } from '
 import { AnimatePresence, motion } from 'framer-motion';
 
 import { ThemeProvider } from './context/ThemeContext';
+import { LanguageProvider } from './context/LanguageContext';
 import { AuthProvider } from './auth/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppShell from './components/AppShell';
@@ -143,41 +144,43 @@ function AppLayout() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route element={<MarketingLayout />}>
-              <Route path="/" element={<MarketingOrApp><Landing /></MarketingOrApp>} />
-              <Route path="/about" element={<MarketingOrApp><About /></MarketingOrApp>} />
-              <Route path="/features" element={<MarketingOrApp><Features /></MarketingOrApp>} />
-              <Route path="/install" element={<MarketingOrApp><Install /></MarketingOrApp>} />
-              <Route path="/contact" element={<MarketingOrApp><Contact /></MarketingOrApp>} />
-              {/* Not gated by MarketingOrApp — a legal reference page should
-                  stay reachable regardless of install state, unlike the
-                  marketing pitches above. */}
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/welcome" element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
-              {/* No ProtectedRoute wrapper — it handles the logged-out case
-                  itself (stash + redirect to /login) rather than bouncing
-                  there with the shared text silently lost. */}
-              <Route path="/share-target" element={<ShareTarget />} />
-              <Route path="*" element={<NotFound />} />
-            </Route>
+    <LanguageProvider>
+      <ThemeProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route element={<MarketingLayout />}>
+                <Route path="/" element={<MarketingOrApp><Landing /></MarketingOrApp>} />
+                <Route path="/about" element={<MarketingOrApp><About /></MarketingOrApp>} />
+                <Route path="/features" element={<MarketingOrApp><Features /></MarketingOrApp>} />
+                <Route path="/install" element={<MarketingOrApp><Install /></MarketingOrApp>} />
+                <Route path="/contact" element={<MarketingOrApp><Contact /></MarketingOrApp>} />
+                {/* Not gated by MarketingOrApp — a legal reference page should
+                    stay reachable regardless of install state, unlike the
+                    marketing pitches above. */}
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/welcome" element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
+                {/* No ProtectedRoute wrapper — it handles the logged-out case
+                    itself (stash + redirect to /login) rather than bouncing
+                    there with the shared text silently lost. */}
+                <Route path="/share-target" element={<ShareTarget />} />
+                <Route path="*" element={<NotFound />} />
+              </Route>
 
-            <Route element={<AppLayout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/stacks" element={<GroupStacks />} />
-              <Route path="/stacks/:stackId" element={<GroupStackDetail />} />
-              <Route path="/settings" element={<Settings />} />
-            </Route>
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </ThemeProvider>
+              <Route element={<AppLayout />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/stacks" element={<GroupStacks />} />
+                <Route path="/stacks/:stackId" element={<GroupStackDetail />} />
+                <Route path="/settings" element={<Settings />} />
+              </Route>
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </ThemeProvider>
+    </LanguageProvider>
   );
 }

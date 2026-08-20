@@ -1,6 +1,7 @@
 import { AnimatePresence, Reorder } from 'framer-motion';
 import { Sun } from 'lucide-react';
 
+import { useLanguage } from '../../context/LanguageContext';
 import TaskItem from './TaskItem';
 import styles from './TaskList.module.css';
 
@@ -19,15 +20,18 @@ export default function TaskList({
   // A component reference (e.g. `CheckCircle2`), not an icon name string —
   // callers import the lucide icon they want and pass it straight through.
   EmptyIcon = Sun,
-  emptyTitle = 'Nothing on your plate yet',
-  emptySubtitle = "Add a task above to start today's stack.",
+  emptyTitle,
+  emptySubtitle,
 }) {
+  const { t } = useLanguage();
   if (tasks.length === 0) {
     return (
       <div className={styles.emptyState}>
         <EmptyIcon size={40} strokeWidth={1.5} className={styles.emptyIcon} />
-        <p className={`text-body-strong ${styles.emptyTitle}`}>{emptyTitle}</p>
-        <p className={`text-small text-muted ${styles.emptySubtitle}`}>{emptySubtitle}</p>
+        <p className={`text-body-strong ${styles.emptyTitle}`}>{emptyTitle ?? t('dashboard.taskList.emptyTitle')}</p>
+        <p className={`text-small text-muted ${styles.emptySubtitle}`}>
+          {emptySubtitle ?? t('dashboard.taskList.emptySubtitle')}
+        </p>
       </div>
     );
   }

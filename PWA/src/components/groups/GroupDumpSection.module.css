@@ -12,7 +12,7 @@
   border: none;
   color: var(--color-text-muted);
   cursor: pointer;
-  text-align: left;
+  text-align: start;
 }
 
 .label {

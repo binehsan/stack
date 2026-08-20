@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
+import { useLanguage } from '../context/LanguageContext';
 import { requestPasswordReset } from '../api/auth';
 import GradientBackground from '../components/GradientBackground';
 import Logo from '../components/Logo';
@@ -17,6 +18,7 @@ import styles from './Auth.module.css';
 // responses either way (see PasswordResetRequestView) specifically so this
 // page can't be used to test which emails are registered.
 export default function ForgotPassword() {
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -25,7 +27,7 @@ export default function ForgotPassword() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!email.trim()) {
-      setError('Enter your email.');
+      setError(t('auth.forgotPassword.errorEmailRequired'));
       return;
     }
     setError(null);
@@ -34,7 +36,7 @@ export default function ForgotPassword() {
       await requestPasswordReset(email.trim());
       setSent(true);
     } catch (err) {
-      setError(err.message || 'Something went wrong, try again.');
+      setError(err.message || t('auth.forgotPassword.errorGeneric'));
     } finally {
       setLoading(false);
     }
@@ -51,7 +53,7 @@ export default function ForgotPassword() {
             className={styles.brandMark}
           >
             <Logo size={64} />
-            <h1 className={`text-header ${styles.wordmark}`}>Stack</h1>
+            <h1 className={`text-header ${styles.wordmark}`}>{t('auth.forgotPassword.wordmark')}</h1>
           </motion.div>
 
           <motion.div
@@ -62,30 +64,29 @@ export default function ForgotPassword() {
             <Card elevated className={styles.card}>
               {sent ? (
                 <>
-                  <h2 className={`text-title ${styles.title}`}>Check your email</h2>
+                  <h2 className={`text-title ${styles.title}`}>{t('auth.forgotPassword.checkEmailTitle')}</h2>
                   <p className={`text-small text-muted ${styles.subtitle}`}>
-                    If an account exists for {email.trim()}, a reset link is on its way. It works
-                    for the next 3 days.
+                    {t('auth.forgotPassword.checkEmailBody', { email: email.trim() })}
                   </p>
-                  <PrimaryButton as={Link} to="/login" title="Back to log in" variant="ghost" />
+                  <PrimaryButton as={Link} to="/login" title={t('auth.forgotPassword.backToLogin')} variant="ghost" />
                 </>
               ) : (
                 <>
-                  <h2 className={`text-title ${styles.title}`}>Forgot your password?</h2>
+                  <h2 className={`text-title ${styles.title}`}>{t('auth.forgotPassword.title')}</h2>
                   <p className={`text-small text-muted ${styles.subtitle}`}>
-                    Enter your email and we&rsquo;ll send you a link to reset it.
+                    {t('auth.forgotPassword.subtitle')}
                   </p>
                   <ErrorBanner message={error} />
                   <form className={styles.form} onSubmit={handleSubmit} noValidate>
                     <AuthTextField
-                      label="Email"
+                      label={t('auth.forgotPassword.emailLabel')}
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
+                      placeholder={t('auth.forgotPassword.emailPlaceholder')}
                       autoComplete="email"
                     />
-                    <PrimaryButton type="submit" title="Send reset link" loading={loading} />
+                    <PrimaryButton type="submit" title={t('auth.forgotPassword.submit')} loading={loading} />
                   </form>
                 </>
               )}

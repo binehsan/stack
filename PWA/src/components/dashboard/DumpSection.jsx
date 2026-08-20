@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, Trash2 } from 'lucide-react';
 
+import { useLanguage } from '../../context/LanguageContext';
 import TaskItem from './TaskItem';
 import styles from './DumpSection.module.css';
 
@@ -10,6 +11,7 @@ import styles from './DumpSection.module.css';
 // Expandable to review or undo (click to uncomplete, delete still works).
 // Web port of frontend/src/components/DumpSection.js.
 export default function DumpSection({ tasks, onToggle, onDelete, onToggleStar, starDisabled }) {
+  const { t } = useLanguage();
   const [expanded, setExpanded] = useState(false);
 
   if (tasks.length === 0) return null;
@@ -24,8 +26,10 @@ export default function DumpSection({ tasks, onToggle, onDelete, onToggleStar, s
     >
       <button type="button" className={styles.header} onClick={() => setExpanded((prev) => !prev)}>
         <Trash2 size={14} strokeWidth={2} className={styles.headerIcon} />
-        <span className={`text-small ${styles.label}`}>Dump</span>
-        <span className={`text-tiny text-muted ${styles.count}`}>{tasks.length} done</span>
+        <span className={`text-small ${styles.label}`}>{t('dashboard.dumpSection.label')}</span>
+        <span className={`text-tiny text-muted ${styles.count}`}>
+          {t('dashboard.dumpSection.count', { count: tasks.length })}
+        </span>
         <motion.span
           animate={{ rotate: expanded ? 180 : 0 }}
           transition={{ duration: 0.2 }}

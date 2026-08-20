@@ -9,12 +9,13 @@ import Logo from '../components/Logo';
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
 import SyntaxCredit from '../components/SyntaxCredit';
+import { useLanguage } from '../context/LanguageContext';
 import styles from './Welcome.module.css';
 
 const UNLOCKED = [
-  { icon: LayoutList, text: 'The full task dashboard, focus strip, and Dump, in any browser' },
-  { icon: RefreshCw, text: 'Cross-sync between the mobile app and the website' },
-  { icon: Laptop, text: 'Desktop app access, plus every future Stack app or plugin we ship' },
+  { icon: LayoutList, key: 'unlock1' },
+  { icon: RefreshCw, key: 'unlock2' },
+  { icon: Laptop, key: 'unlock3' },
 ];
 
 // Reads the *active* theme's actual colors off the root element rather than
@@ -42,6 +43,7 @@ function fireConfetti() {
 // moment before the dashboard, now that every account unlocks everything.
 export default function Welcome() {
   const firedRef = useRef(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (firedRef.current) return;
@@ -68,24 +70,22 @@ export default function Welcome() {
             transition={{ duration: 0.45, delay: 0.08 }}
           >
             <Card elevated className={styles.card}>
-              <p className={`text-tiny text-accent ${styles.eyebrow}`}>You&rsquo;re in</p>
-              <h1 className={`text-header ${styles.title}`}>Welcome to Stack</h1>
-              <p className={`text-small text-muted ${styles.body}`}>
-                Your account is ready. Here&rsquo;s what you&rsquo;ve got, free:
-              </p>
+              <p className={`text-tiny text-accent ${styles.eyebrow}`}>{t('auth.welcome.eyebrow')}</p>
+              <h1 className={`text-header ${styles.title}`}>{t('auth.welcome.title')}</h1>
+              <p className={`text-small text-muted ${styles.body}`}>{t('auth.welcome.body')}</p>
 
               <ul className={styles.list}>
-                {UNLOCKED.map(({ icon: Icon, text }) => (
-                  <li key={text} className={styles.listRow}>
+                {UNLOCKED.map(({ icon: Icon, key }) => (
+                  <li key={key} className={styles.listRow}>
                     <span className={styles.listIcon}>
                       <Icon size={15} strokeWidth={2.25} />
                     </span>
-                    <span className="text-body">{text}</span>
+                    <span className="text-body">{t(`auth.welcome.${key}`)}</span>
                   </li>
                 ))}
               </ul>
 
-              <PrimaryButton as={Link} to="/dashboard" title="Go to My Stack" variant="solid" />
+              <PrimaryButton as={Link} to="/dashboard" title={t('auth.welcome.cta')} variant="solid" />
             </Card>
           </motion.div>
 

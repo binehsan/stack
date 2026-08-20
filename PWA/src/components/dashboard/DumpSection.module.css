@@ -28,7 +28,7 @@
 
 .count {
   flex: 1;
-  text-align: left;
+  text-align: start;
 }
 
 .chevron {

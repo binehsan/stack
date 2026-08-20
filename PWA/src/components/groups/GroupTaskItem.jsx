@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Check, Trash2 } from 'lucide-react';
 
 import Avatar from './Avatar';
+import { useLanguage } from '../../context/LanguageContext';
 import styles from './GroupTaskItem.module.css';
 
 // A shared group-stack task row: checkbox + text, who it's assigned to,
@@ -9,6 +10,7 @@ import styles from './GroupTaskItem.module.css';
 // frontend/src/components/GroupTaskItem.js (swipe-to-delete becomes a
 // plain delete button, since there's no touch gesture on the web).
 export default function GroupTaskItem({ task, onToggle, onDelete, onNudge }) {
+  const { t } = useLanguage();
   return (
     <motion.div
       layout
@@ -29,14 +31,14 @@ export default function GroupTaskItem({ task, onToggle, onDelete, onNudge }) {
 
       <button type="button" className={styles.nudgeButton} onClick={() => onNudge(task)}>
         <Avatar uri={task.assigned_to?.avatar} label={task.assigned_to?.username || '?'} size={26} />
-        <span className={styles.nudgeLabel}>Nudge</span>
+        <span className={styles.nudgeLabel}>{t('groups.groupTaskItem.nudge')}</span>
       </button>
 
       <button
         type="button"
         className={styles.deleteButton}
         onClick={() => onDelete(task.id)}
-        aria-label="Delete task"
+        aria-label={t('groups.groupTaskItem.deleteAria')}
       >
         <Trash2 size={16} />
       </button>

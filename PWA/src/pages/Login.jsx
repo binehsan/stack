@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 import { useAuth } from '../auth/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { createTask } from '../api/tasks';
 import GradientBackground from '../components/GradientBackground';
 import Logo from '../components/Logo';
@@ -32,6 +33,7 @@ async function flushPendingShare() {
 export default function Login() {
   const navigate = useNavigate();
   const { login, isAuthenticated, isReady } = useAuth();
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,7 +47,7 @@ export default function Login() {
   async function handleLogin(e) {
     e.preventDefault();
     if (!email.trim() || !password) {
-      setError('Enter your email and password.');
+      setError(t('auth.login.errorMissingFields'));
       return;
     }
     setError(null);
@@ -65,7 +67,7 @@ export default function Login() {
       // and does. Precached by the service worker, so this is still fast.
       window.location.assign('/dashboard');
     } catch (err) {
-      setError(err.message || 'Something went wrong, try again.');
+      setError(err.message || t('auth.login.errorGeneric'));
     } finally {
       setLoading(false);
     }
@@ -82,8 +84,8 @@ export default function Login() {
             className={styles.brandMark}
           >
             <Logo size={64} />
-            <h1 className={`text-header ${styles.wordmark}`}>Stack</h1>
-            <p className={`text-small ${styles.tagline}`}>Your day, dumped and done.</p>
+            <h1 className={`text-header ${styles.wordmark}`}>{t('auth.login.wordmark')}</h1>
+            <p className={`text-small ${styles.tagline}`}>{t('auth.login.tagline')}</p>
           </motion.div>
 
           <motion.div
@@ -92,31 +94,31 @@ export default function Login() {
             transition={{ duration: 0.42, delay: 0.09 }}
           >
             <Card elevated className={styles.card}>
-              <h2 className={`text-title ${styles.title}`}>Welcome back</h2>
+              <h2 className={`text-title ${styles.title}`}>{t('auth.login.title')}</h2>
               <ErrorBanner message={error} />
               <form className={styles.form} onSubmit={handleLogin} noValidate>
                 <AuthTextField
-                  label="Email"
+                  label={t('auth.login.emailLabel')}
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
+                  placeholder={t('auth.login.emailPlaceholder')}
                   autoComplete="email"
                 />
                 <AuthTextField
-                  label="Password"
+                  label={t('auth.login.passwordLabel')}
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder={t('auth.login.passwordPlaceholder')}
                   autoComplete="current-password"
                 />
-                <PrimaryButton type="submit" title="Log in" loading={loading} />
+                <PrimaryButton type="submit" title={t('auth.login.submit')} loading={loading} />
               </form>
               <div className={styles.switchRow}>
                 <Link to="/forgot-password" className={styles.pill}>
                   <span className={`text-small ${styles.switchText}`}>
-                    Forgot your <span className={styles.switchLink}>password?</span>
+                    {t('auth.login.forgotPre')} <span className={styles.switchLink}>{t('auth.login.forgotLink')}</span>
                   </span>
                 </Link>
               </div>
@@ -131,16 +133,13 @@ export default function Login() {
           className={styles.noAccountSection}
         >
           <Card className={styles.singlePathCard}>
-            <h3 className={`text-title ${styles.pathTitle}`}>New to Stack?</h3>
-            <p className={`text-small text-muted ${styles.pathBody}`}>
-              One free account, works everywhere — install it on your phone in seconds, or just
-              use it in any browser.
-            </p>
+            <h3 className={`text-title ${styles.pathTitle}`}>{t('auth.login.newHeading')}</h3>
+            <p className={`text-small text-muted ${styles.pathBody}`}>{t('auth.login.newBody')}</p>
             <div className={styles.pathButton}>
-              <PrimaryButton as={Link} to="/signup" title="Sign up free" />
+              <PrimaryButton as={Link} to="/signup" title={t('auth.login.signupButton')} />
             </div>
             <Link to="/install" className={styles.installLink}>
-              How do I install it?
+              {t('auth.login.installLink')}
             </Link>
           </Card>
         </motion.div>

@@ -1,3 +1,4 @@
+import { useLanguage } from '../context/LanguageContext';
 import styles from './PrimaryButton.module.css';
 
 export default function PrimaryButton({
@@ -11,6 +12,7 @@ export default function PrimaryButton({
   href,
   ...rest
 }) {
+  const { t } = useLanguage();
   const isDisabled = disabled || loading;
   const className = [styles.button, styles[variant], isDisabled && styles.disabled].filter(Boolean).join(' ');
 
@@ -30,7 +32,7 @@ export default function PrimaryButton({
       disabled={isDisabled}
       {...rest}
     >
-      {loading ? <span className={styles.spinner} aria-label="Loading" /> : title}
+      {loading ? <span className={styles.spinner} aria-label={t('common.loading.label')} /> : title}
     </button>
   );
 }

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 
+import { useLanguage } from '../../context/LanguageContext';
 import styles from './TaskInput.module.css';
 
 // The single text box for dumping a new task. Defaults to NOT auto-focusing
@@ -18,9 +19,11 @@ import styles from './TaskInput.module.css';
 // rather than deleted, in case it's worth revisiting later.
 export default function TaskInput({
   onSubmit,
-  placeholder = "What's on your plate today?",
+  placeholder,
   autoFocus = false,
 }) {
+  const { t } = useLanguage();
+  const resolvedPlaceholder = placeholder ?? t('dashboard.taskInput.placeholder');
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const inputRef = useRef(null);
@@ -59,17 +62,17 @@ export default function TaskInput({
           className={styles.input}
           value={text}
           onChange={(event) => updateText(event.target.value)}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
           autoFocus={autoFocus}
           disabled={submitting}
           maxLength={280}
-          aria-label="New task"
+          aria-label={t('dashboard.taskInput.newTaskLabel')}
         />
         <button
           type="submit"
           className={styles.button}
           disabled={text.trim().length === 0 || submitting}
-          aria-label="Add task"
+          aria-label={t('dashboard.taskInput.addTaskLabel')}
         >
           <Plus size={22} strokeWidth={2.5} />
         </button>

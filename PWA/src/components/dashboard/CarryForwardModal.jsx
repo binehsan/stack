@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Check } from 'lucide-react';
 
+import { useLanguage } from '../../context/LanguageContext';
 import BottomSheet from '../BottomSheet';
 import styles from './CarryForwardModal.module.css';
 
@@ -9,6 +10,7 @@ import styles from './CarryForwardModal.module.css';
 // and lets the user pick exactly which ones (if any) to bring into today.
 // Web counterpart of frontend/src/components/CarryForwardModal.js.
 export default function CarryForwardModal({ visible, candidates, onSubmit }) {
+  const { t } = useLanguage();
   const [selected, setSelected] = useState(new Set());
 
   function toggle(id) {
@@ -28,13 +30,13 @@ export default function CarryForwardModal({ visible, candidates, onSubmit }) {
   if (!candidates || candidates.length === 0) return null;
 
   return (
-    <BottomSheet open={visible} dismissible={false} label="Bring anything forward?">
-      <h3 className={`text-title ${styles.title}`}>Bring anything forward?</h3>
+    <BottomSheet open={visible} dismissible={false} label={t('dashboard.carryForwardModal.ariaLabel')}>
+      <h3 className={`text-title ${styles.title}`}>{t('dashboard.carryForwardModal.heading')}</h3>
       <p className={`text-small ${styles.subtitle}`}>
         {candidates.length === 1
-          ? 'You had 1 task left over from yesterday.'
-          : `You had ${candidates.length} tasks left over from yesterday.`}{' '}
-        Pick any you&rsquo;d like on today&rsquo;s stack — totally optional.
+          ? t('dashboard.carryForwardModal.oneTask')
+          : t('dashboard.carryForwardModal.manyTasks', { count: candidates.length })}{' '}
+        {t('dashboard.carryForwardModal.subtitleTail')}
       </p>
 
       <div className={styles.list}>
@@ -58,10 +60,12 @@ export default function CarryForwardModal({ visible, candidates, onSubmit }) {
 
       <div className={styles.actions}>
         <button type="button" className={styles.skipButton} onClick={() => handleSubmit([])}>
-          Not today
+          {t('dashboard.carryForwardModal.notToday')}
         </button>
         <button type="button" className={styles.primaryButton} onClick={() => handleSubmit([...selected])}>
-          {selected.size === 0 ? 'Start fresh' : `Bring forward (${selected.size})`}
+          {selected.size === 0
+            ? t('dashboard.carryForwardModal.startFresh')
+            : t('dashboard.carryForwardModal.bringForward', { count: selected.size })}
         </button>
       </div>
     </BottomSheet>

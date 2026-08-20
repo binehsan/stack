@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Download } from 'lucide-react';
 
 import { useAuth } from '../auth/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { createTask } from '../api/tasks';
 import GradientBackground from '../components/GradientBackground';
 import Logo from '../components/Logo';
@@ -34,6 +35,7 @@ const USERNAME_RE = /^[a-z0-9_]+$/i;
 export default function Signup() {
   const navigate = useNavigate();
   const { register, isAuthenticated, isReady } = useAuth();
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -54,20 +56,20 @@ export default function Signup() {
     const errors = {};
 
     if (!trimmedEmail || !EMAIL_RE.test(trimmedEmail)) {
-      errors.email = 'Enter a valid email address.';
+      errors.email = t('auth.signup.errorEmail');
     }
     if (trimmedUsername && !USERNAME_RE.test(trimmedUsername)) {
-      errors.username = 'Only letters, numbers, and underscores.';
+      errors.username = t('auth.signup.errorUsername');
     }
     if (!password) {
-      errors.password = 'Password is required.';
+      errors.password = t('auth.signup.errorPasswordRequired');
     } else if (password.length < 8) {
-      errors.password = 'Password needs to be at least 8 characters.';
+      errors.password = t('auth.signup.errorPasswordLength');
     }
     if (!confirm) {
-      errors.confirm = 'Confirm your password.';
+      errors.confirm = t('auth.signup.errorConfirmRequired');
     } else if (password && confirm !== password) {
-      errors.confirm = "Passwords don't match.";
+      errors.confirm = t('auth.signup.errorPasswordMismatch');
     }
 
     setFieldErrors(errors);
@@ -89,7 +91,7 @@ export default function Signup() {
       // Activity's chrome at all.
       window.location.assign('/welcome');
     } catch (err) {
-      setError(err.message || 'Something went wrong, try again.');
+      setError(err.message || t('auth.signup.errorGeneric'));
     } finally {
       setLoading(false);
     }
@@ -106,8 +108,8 @@ export default function Signup() {
             className={styles.brandMark}
           >
             <Logo size={56} />
-            <h1 className={`text-header ${styles.wordmark}`}>Stack</h1>
-            <p className={`text-small ${styles.tagline}`}>Start today's stack fresh.</p>
+            <h1 className={`text-header ${styles.wordmark}`}>{t('auth.signup.wordmark')}</h1>
+            <p className={`text-small ${styles.tagline}`}>{t('auth.signup.tagline')}</p>
           </motion.div>
 
           <motion.div
@@ -116,57 +118,56 @@ export default function Signup() {
             transition={{ duration: 0.42, delay: 0.09 }}
           >
             <Card elevated className={styles.card}>
-              <h2 className={`text-title ${styles.title}`}>Create your Stack account</h2>
+              <h2 className={`text-title ${styles.title}`}>{t('auth.signup.title')}</h2>
               <p className={`text-small text-muted ${styles.subtitle}`}>
                 <Download
                   size={14}
                   strokeWidth={2.25}
-                  style={{ verticalAlign: '-2px', marginRight: 6 }}
+                  style={{ verticalAlign: '-2px', marginInlineEnd: 6 }}
                 />
-                One free account, works in any browser — install it to your home screen in
-                seconds (<Link to="/install" className={styles.inlineLink}>how</Link>).
+                {t('auth.signup.subtitlePre')} (<Link to="/install" className={styles.inlineLink}>{t('auth.signup.subtitleLink')}</Link>{t('auth.signup.subtitlePost')}
               </p>
               <ErrorBanner message={error} />
               <form className={styles.form} onSubmit={handleRegister} noValidate>
                 <AuthTextField
-                  label="Email"
+                  label={t('auth.signup.emailLabel')}
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
+                  placeholder={t('auth.signup.emailPlaceholder')}
                   autoComplete="email"
                   error={fieldErrors.email}
                 />
                 <AuthTextField
-                  label="Username (optional)"
+                  label={t('auth.signup.usernameLabel')}
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Auto-generated if blank"
+                  placeholder={t('auth.signup.usernamePlaceholder')}
                   autoComplete="username"
                   error={fieldErrors.username}
                 />
                 <AuthTextField
-                  label="Password"
+                  label={t('auth.signup.passwordLabel')}
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 8 characters"
+                  placeholder={t('auth.signup.passwordPlaceholder')}
                   autoComplete="new-password"
                   error={fieldErrors.password}
                 />
                 <AuthTextField
-                  label="Confirm password"
+                  label={t('auth.signup.confirmLabel')}
                   type="password"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder={t('auth.signup.confirmPlaceholder')}
                   autoComplete="new-password"
                   error={fieldErrors.confirm}
                 />
-                <PrimaryButton type="submit" title="Sign up" loading={loading} />
+                <PrimaryButton type="submit" title={t('auth.signup.submit')} loading={loading} />
                 <p className={`text-tiny text-muted ${styles.legalNote}`}>
-                  By signing up you agree to Stack&rsquo;s <Link to="/privacy" className={styles.inlineLink}>Privacy Policy</Link>.
+                  {t('auth.signup.legalPre')} <Link to="/privacy" className={styles.inlineLink}>{t('auth.signup.legalLink')}</Link>{t('auth.signup.legalPost')}
                 </p>
               </form>
             </Card>
@@ -175,7 +176,7 @@ export default function Signup() {
           <div className={styles.switchRow}>
             <Link to="/login" className={styles.pill}>
               <span className={`text-small ${styles.switchText}`}>
-                Already have an account? <span className={styles.switchLink}>Log in</span>
+                {t('auth.signup.switchPre')} <span className={styles.switchLink}>{t('auth.signup.switchLink')}</span>
               </span>
             </Link>
           </div>

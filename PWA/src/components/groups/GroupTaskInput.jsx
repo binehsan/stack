@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 
+import { useLanguage } from '../../context/LanguageContext';
 import styles from './GroupTaskInput.module.css';
 
 // The add-a-task box at the top of a group stack's task list — the web
 // counterpart of TaskInput.js, minus voice input (mobile-only feature).
-export default function GroupTaskInput({ onSubmit, placeholder = 'Add something to the stack…' }) {
+export default function GroupTaskInput({ onSubmit, placeholder }) {
+  const { t } = useLanguage();
+  const resolvedPlaceholder = placeholder ?? t('groups.groupTaskInput.placeholder');
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -28,7 +31,7 @@ export default function GroupTaskInput({ onSubmit, placeholder = 'Add something 
         className={styles.input}
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder={placeholder}
+        placeholder={resolvedPlaceholder}
         maxLength={280}
         disabled={submitting}
       />
@@ -36,7 +39,7 @@ export default function GroupTaskInput({ onSubmit, placeholder = 'Add something 
         type="submit"
         className={styles.button}
         disabled={text.trim().length === 0 || submitting}
-        aria-label="Add task"
+        aria-label={t('groups.groupTaskInput.addAria')}
       >
         <Plus size={22} strokeWidth={2.5} />
       </button>

@@ -6,50 +6,55 @@ import GradientBackground from '../components/GradientBackground';
 import PrimaryButton from '../components/PrimaryButton';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
+import { useLanguage } from '../context/LanguageContext';
 import styles from './Features.module.css';
 
-function FocusMockup() {
+function FocusMockup({ t }) {
   return (
     <div className={styles.mockCard}>
       <div className={styles.mockFocusHeader}>
         <Star size={13} className={styles.mockAccentIcon} fill="currentColor" />
-        <span className={styles.mockLabel}>Today's focus</span>
-        <span className={styles.mockCount}>2/3</span>
+        <span className={styles.mockLabel}>{t('marketing.features.mockup.focusLabel')}</span>
+        <span className={styles.mockCount}>{t('marketing.features.mockup.focusCount')}</span>
       </div>
-      {['Finish quarterly report', 'Call the dentist'].map((t) => (
-        <div key={t} className={styles.mockFocusRow}>
+      {[t('marketing.features.mockup.task1'), t('marketing.features.mockup.task2')].map((row) => (
+        <div key={row} className={styles.mockFocusRow}>
           <span className={styles.mockDot} />
-          <span>{t}</span>
+          <span>{row}</span>
         </div>
       ))}
       <div className={[styles.mockFocusRow, styles.mockRowDone].join(' ')}>
         <span className={[styles.mockDot, styles.mockDotDone].join(' ')} />
-        <span className={styles.mockStrike}>Pack gym bag</span>
+        <span className={styles.mockStrike}>{t('marketing.features.mockup.task3')}</span>
       </div>
     </div>
   );
 }
 
-function DumpMockup() {
+function DumpMockup({ t }) {
   return (
     <div className={styles.mockCard}>
       <div className={styles.mockDumpHeader}>
         <Trash2 size={13} className={styles.mockMutedIcon} />
-        <span className={styles.mockLabel}>Dump</span>
-        <span className={styles.mockCount}>4 done</span>
+        <span className={styles.mockLabel}>{t('marketing.features.mockup.dumpLabel')}</span>
+        <span className={styles.mockCount}>{t('marketing.features.mockup.dumpCount')}</span>
         <ChevronDown size={14} className={styles.mockMutedIcon} />
       </div>
-      {['Reply to Sam', 'Water the plants', 'Book flights'].map((t) => (
-        <div key={t} className={[styles.mockPlainRow, styles.mockRowDone].join(' ')}>
+      {[
+        t('marketing.features.mockup.dumpTask1'),
+        t('marketing.features.mockup.dumpTask2'),
+        t('marketing.features.mockup.dumpTask3'),
+      ].map((row) => (
+        <div key={row} className={[styles.mockPlainRow, styles.mockRowDone].join(' ')}>
           <CheckCircle2 size={14} className={styles.mockSuccessIcon} />
-          <span className={styles.mockStrike}>{t}</span>
+          <span className={styles.mockStrike}>{row}</span>
         </div>
       ))}
     </div>
   );
 }
 
-function GroupStacksMockup() {
+function GroupStacksMockup({ t }) {
   return (
     <div className={styles.mockCard}>
       <div className={styles.mockAvatarRow}>
@@ -60,12 +65,12 @@ function GroupStacksMockup() {
       </div>
       <div className={styles.mockPlainRow}>
         <span className={styles.mockDot} />
-        <span>Buy groceries</span>
+        <span>{t('marketing.features.mockup.groupTask1')}</span>
         <span className={styles.mockTag}>J</span>
       </div>
       <div className={styles.mockPlainRow}>
         <span className={styles.mockDot} />
-        <span>Take out the trash</span>
+        <span>{t('marketing.features.mockup.groupTask2')}</span>
         <span className={styles.mockTag}>R</span>
       </div>
     </div>
@@ -90,16 +95,16 @@ function SyncMockup() {
   );
 }
 
-function RecapMockup() {
+function RecapMockup({ t }) {
   return (
     <div className={styles.mockStatRow}>
       <div className={styles.mockStatTile}>
         <span className={styles.mockStatValue}>6</span>
-        <span className={styles.mockStatLabel}>done today</span>
+        <span className={styles.mockStatLabel}>{t('marketing.features.mockup.recapDoneToday')}</span>
       </div>
       <div className={styles.mockStatTile}>
         <span className={styles.mockStatValue}><Flame size={18} className={styles.mockAccentIcon} /> 4</span>
-        <span className={styles.mockStatLabel}>day streak</span>
+        <span className={styles.mockStatLabel}>{t('marketing.features.mockup.recapDayStreak')}</span>
       </div>
     </div>
   );
@@ -119,52 +124,21 @@ function ThemeMockup() {
   );
 }
 
-const SECTIONS = [
-  {
-    icon: Star,
-    eyebrow: 'Focus',
-    title: 'See today’s priorities, not your whole list',
-    body: 'Star up to three tasks and they lift into a highlighted strip at the top of your stack. It’s optional, the app works fine with zero stars, but on a day with fifteen things to do, it’s the difference between a list and a plan.',
-    Mockup: FocusMockup,
-  },
-  {
-    icon: Trash2,
-    eyebrow: 'Dump',
-    title: 'Finished tasks stick around long enough to matter',
-    body: 'Complete something and it doesn’t just disappear, it slides into the Dump, a collapsed strip you can expand to see everything you got done today. Satisfying to glance at, easy to ignore when you don’t need it.',
-    Mockup: DumpMockup,
-  },
-  {
-    icon: Users,
-    eyebrow: 'Group Stacks',
-    title: 'Share a list with the people you live and work with',
-    body: 'Start a Group Stack for your household, roommates, or friend group. Everyone can add items, check things off, and see who added what, with invites to bring people in and nudges so nothing stalls out.',
-    Mockup: GroupStacksMockup,
-  },
-  {
-    icon: RefreshCw,
-    eyebrow: 'Sync',
-    title: 'One stack, every device',
-    body: 'Stack syncs across every phone and tablet you own, no extra setup — and the same free account works on the web: keep working from any browser, or install Stack as a desktop app on Windows or macOS. Add a task on your laptop at work, cross it off from your phone on the way home, and it stays current everywhere in between. Any native desktop app or browser extension Stack ships later comes free too.',
-    Mockup: SyncMockup,
-  },
-  {
-    icon: Flame,
-    eyebrow: 'Recap',
-    title: 'A quick look back, and a reason to come back',
-    body: 'Open the app and get a short recap of what you finished, plus a lightweight streak for days you got at least one thing done. No leaderboards, no shame spirals if you break it, just a nice nudge.',
-    Mockup: RecapMockup,
-  },
-  {
-    icon: Palette,
-    eyebrow: 'Appearance',
-    title: 'Make it feel like yours',
-    body: 'Switch between Dawn and Dusk, or let Stack follow your system setting automatically. Classic, Purple, Forest Green, and Alpine Blue are all free, on the app and on the web.',
-    Mockup: ThemeMockup,
-  },
-];
+const SECTION_ICONS = [Star, Trash2, Users, RefreshCw, Flame, Palette];
+const SECTION_KEYS = ['focus', 'dump', 'group', 'sync', 'recap', 'appearance'];
+const SECTION_MOCKUPS = [FocusMockup, DumpMockup, GroupStacksMockup, SyncMockup, RecapMockup, ThemeMockup];
 
 export default function Features() {
+  const { t } = useLanguage();
+
+  const SECTIONS = SECTION_KEYS.map((key, i) => ({
+    icon: SECTION_ICONS[i],
+    eyebrow: t(`marketing.features.sections.${key}.eyebrow`),
+    title: t(`marketing.features.sections.${key}.title`),
+    body: t(`marketing.features.sections.${key}.body`),
+    Mockup: SECTION_MOCKUPS[i],
+  }));
+
   return (
     <GradientBackground>
       <MarketingNav />
@@ -176,12 +150,9 @@ export default function Features() {
           transition={{ duration: 0.4 }}
           className={styles.heroInner}
         >
-          <p className="text-tiny text-accent">Features</p>
-          <h1 className={styles.heroTitle}>Everything Stack does, in detail</h1>
-          <p className={styles.heroBody}>
-            No due dates, no projects, no categories to configure. Just the handful of features
-            that make a daily to-do list actually pleasant to use, alone or with other people.
-          </p>
+          <p className="text-tiny text-accent">{t('marketing.features.eyebrow')}</p>
+          <h1 className={styles.heroTitle}>{t('marketing.features.heroTitle')}</h1>
+          <p className={styles.heroBody}>{t('marketing.features.heroBody')}</p>
         </motion.div>
       </section>
 
@@ -204,7 +175,7 @@ export default function Features() {
               <p className={styles.sectionBody}>{body}</p>
             </div>
             <div className={styles.visualCol}>
-              <Mockup />
+              <Mockup t={t} />
             </div>
           </motion.section>
         ))}
@@ -218,21 +189,21 @@ export default function Features() {
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.4 }}
         >
-          <h2 className={styles.closingTitle}>See it for yourself</h2>
+          <h2 className={styles.closingTitle}>{t('marketing.features.closingTitle')}</h2>
           <p className={styles.closingChoice}>
             <span className={styles.closingChoiceItem}>
-              <Monitor size={15} strokeWidth={2.25} /> desktop
+              <Monitor size={15} strokeWidth={2.25} /> {t('marketing.features.closingDesktop')}
             </span>
             <span className={styles.closingChoiceDivider}>·</span>
             <span className={styles.closingChoiceItem}>
-              <Smartphone size={15} strokeWidth={2.25} /> phone
+              <Smartphone size={15} strokeWidth={2.25} /> {t('marketing.features.closingPhone')}
             </span>
             <span className={styles.closingChoiceDivider}>·</span>
-            <span className={styles.closingChoiceItem}>installs in seconds, free</span>
+            <span className={styles.closingChoiceItem}>{t('marketing.features.closingFree')}</span>
           </p>
-          <PrimaryButton as={Link} to="/signup" title="Get Stack, free" variant="solid" />
+          <PrimaryButton as={Link} to="/signup" title={t('marketing.features.closingCta')} variant="solid" />
           <Link to="/install" className={styles.closingInstallLink}>
-            How installing works
+            {t('marketing.features.closingInstallLink')}
           </Link>
         </motion.div>
       </section>

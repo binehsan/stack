@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle2, XCircle } from 'lucide-react';
 
 import { useAuth } from '../auth/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { createTask } from '../api/tasks';
 import GradientBackground from '../components/GradientBackground';
 import Logo from '../components/Logo';
@@ -37,6 +38,7 @@ export default function ShareTarget() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isAuthenticated, isReady } = useAuth();
+  const { t } = useLanguage();
   const [status, setStatus] = useState('working'); // 'working' | 'done' | 'error'
   const ranRef = useRef(false);
 
@@ -81,21 +83,21 @@ export default function ShareTarget() {
             {status === 'working' && (
               <>
                 <LoadingSpinner />
-                <p className="text-body-strong">Adding to your stack…</p>
+                <p className="text-body-strong">{t('common.shareTarget.working')}</p>
               </>
             )}
             {status === 'done' && (
               <>
                 <CheckCircle2 size={32} color="var(--color-success)" strokeWidth={2} />
-                <p className="text-body-strong">Added to your stack</p>
+                <p className="text-body-strong">{t('common.shareTarget.done')}</p>
               </>
             )}
             {status === 'error' && (
               <>
                 <XCircle size={32} color="var(--color-danger)" strokeWidth={2} />
-                <p className="text-body-strong">Couldn&rsquo;t add that — try again from the app.</p>
+                <p className="text-body-strong">{t('common.shareTarget.error')}</p>
                 <Link to="/dashboard" className={styles.link}>
-                  Go to My Stack
+                  {t('common.shareTarget.link')}
                 </Link>
               </>
             )}

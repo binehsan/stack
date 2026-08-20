@@ -21,6 +21,7 @@ import {
   updateGroupStack,
   updateGroupTask,
 } from '../api/groupStacks';
+import { useLanguage } from '../context/LanguageContext';
 import styles from './GroupStackDetail.module.css';
 
 // One group stack's detail page — members, invite form, shared task list,
@@ -29,6 +30,7 @@ import styles from './GroupStackDetail.module.css';
 export default function GroupStackDetail() {
   const { stackId } = useParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [loading, setLoading] = useState(true);
   const [stack, setStack] = useState(null);
@@ -61,7 +63,7 @@ export default function GroupStackDetail() {
         setTasks(taskData);
       } catch (err) {
         console.warn('Failed to load group stack:', err.message);
-        if (!silent) setLoadError(err.message || 'Failed to load this group stack.');
+        if (!silent) setLoadError(err.message || t('groups.groupStackDetail.loadError'));
       } finally {
         if (!silent) setLoading(false);
       }
@@ -168,7 +170,10 @@ export default function GroupStackDetail() {
   }
 
   async function handleLeave() {
-    if (!window.confirm(`Leave "${stack?.name || 'this stack'}"?`)) return;
+    const confirmText = t('groups.groupStackDetail.leaveConfirm', {
+      name: stack?.name || t('groups.groupStackDetail.leaveConfirmFallbackName'),
+    });
+    if (!window.confirm(confirmText)) return;
     setLeaving(true);
     try {
       await leaveGroupStack(stackId);
@@ -185,7 +190,7 @@ export default function GroupStackDetail() {
   return (
     <div className={styles.page}>
       <div className={styles.headerRow}>
-        <h1 className={`text-title ${styles.title}`}>{stack ? stack.name : 'Group Stack'}</h1>
+        <h1 className={`text-title ${styles.title}`}>{stack ? stack.name : t('groups.groupStackDetail.fallbackHeading')}</h1>
       </div>
 
       {loading ? (
@@ -194,7 +199,7 @@ export default function GroupStackDetail() {
         </div>
       ) : loadError ? (
         <div className={styles.emptyState}>
-          <p className={`text-body-strong ${styles.emptyTitle}`}>Couldn't load this stack</p>
+          <p className={`text-body-strong ${styles.emptyTitle}`}>{t('groups.groupStackDetail.couldNotLoad')}</p>
           <p className={`text-small ${styles.emptySubtitle}`}>{loadError}</p>
         </div>
       ) : (
@@ -206,7 +211,7 @@ export default function GroupStackDetail() {
                 type="button"
                 className={styles.photoEditBadge}
                 onClick={() => photoInputRef.current?.click()}
-                aria-label="Change group photo"
+                aria-label={t('groups.groupStackDetail.changePhotoAria')}
                 disabled={photoUploading}
               >
                 <Camera size={12} strokeWidth={2.5} />
@@ -240,16 +245,16 @@ export default function GroupStackDetail() {
             {tasks.length === 0 ? (
               <div className={styles.emptyState}>
                 <ClipboardList size={40} strokeWidth={1.5} className={styles.emptyIcon} />
-                <p className={`text-body-strong ${styles.emptyTitle}`}>Nothing on this stack yet</p>
+                <p className={`text-body-strong ${styles.emptyTitle}`}>{t('groups.groupStackDetail.emptyNoTasksTitle')}</p>
                 <p className={`text-small ${styles.emptySubtitle}`}>
-                  Add something above, or nudge it to someone.
+                  {t('groups.groupStackDetail.emptyNoTasksBody')}
                 </p>
               </div>
             ) : activeTasks.length === 0 ? (
               <div className={styles.emptyState}>
                 <CheckCircle2 size={40} strokeWidth={1.5} className={styles.emptyIcon} />
-                <p className={`text-body-strong ${styles.emptyTitle}`}>All done for now</p>
-                <p className={`text-small ${styles.emptySubtitle}`}>Everything's in the Dump below.</p>
+                <p className={`text-body-strong ${styles.emptyTitle}`}>{t('groups.groupStackDetail.emptyAllDoneTitle')}</p>
+                <p className={`text-small ${styles.emptySubtitle}`}>{t('groups.groupStackDetail.emptyAllDoneBody')}</p>
               </div>
             ) : (
               <AnimatePresence initial={false}>
@@ -274,7 +279,7 @@ export default function GroupStackDetail() {
 
             <button type="button" className={styles.leaveButton} onClick={handleLeave} disabled={leaving}>
               <LogOut size={14} strokeWidth={2} />
-              {leaving ? 'Leaving…' : 'Leave this stack'}
+              {leaving ? t('groups.groupStackDetail.leaving') : t('groups.groupStackDetail.leaveButton')}
             </button>
           </div>
         </>

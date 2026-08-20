@@ -8,40 +8,11 @@ import PrimaryButton from '../components/PrimaryButton';
 import Card from '../components/Card';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
+import { useLanguage } from '../context/LanguageContext';
 import styles from './Landing.module.css';
 
-const FEATURES = [
-  {
-    icon: Star,
-    title: 'Focus',
-    body: "Star up to three tasks and they rise into their own highlighted strip: today's actual priorities, not just everything you've ever dumped in.",
-  },
-  {
-    icon: Trash2,
-    title: 'Dump',
-    body: 'Finish something and it slides into the Dump instead of vanishing, a collapsible archive of everything you knocked out today.',
-  },
-  {
-    icon: Users,
-    title: 'Group Stacks',
-    body: 'Share a list with family, roommates, or friends. Everyone can add items and see who’s on the hook, no more "wait, did anyone buy milk?"',
-  },
-  {
-    icon: RefreshCw,
-    title: 'Synced everywhere',
-    body: 'One account, free everywhere it runs — phone, tablet, and the web all stay on the same stack, with a desktop app for Windows and macOS too.',
-  },
-  {
-    icon: Flame,
-    title: 'Recap & streaks',
-    body: 'A short recap of what you finished, plus a lightweight streak for showing up. No leaderboards, no guilt.',
-  },
-  {
-    icon: Sparkles,
-    title: 'Calm by design',
-    body: 'Soft gradients, rounded corners, zero clutter, Stack stays out of your way even with fifteen tasks on screen. All four color families are free.',
-  },
-];
+const FEATURE_ICONS = [Star, Trash2, Users, RefreshCw, Flame, Sparkles];
+const FEATURE_KEYS = ['focus', 'dump', 'group', 'sync', 'recap', 'calm'];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -49,6 +20,13 @@ const fadeUp = {
 };
 
 export default function Landing() {
+  const { t } = useLanguage();
+  const FEATURES = FEATURE_KEYS.map((key, i) => ({
+    icon: FEATURE_ICONS[i],
+    title: t(`marketing.landing.features.${key}.title`),
+    body: t(`marketing.landing.features.${key}.body`),
+  }));
+
   return (
     <GradientBackground>
       <MarketingNav />
@@ -62,19 +40,14 @@ export default function Landing() {
           transition={{ duration: 0.5, ease: 'easeOut' }}
         >
           <Logo size={72} />
-          <h1 className={styles.wordmark}>Stack</h1>
-          <p className={styles.headline}>Your tasks, together.</p>
-          <p className={styles.subheadline}>
-            A calm place for your to-dos, whether solo or with the people you share life with. No due
-            dates, no projects, no guilt backlog. Just today.
-          </p>
+          <h1 className={styles.wordmark}>{t('marketing.landing.wordmark')}</h1>
+          <p className={styles.headline}>{t('marketing.landing.headline')}</p>
+          <p className={styles.subheadline}>{t('marketing.landing.subheadline')}</p>
           <div className={styles.heroActions}>
-            <PrimaryButton as={Link} to="/signup" title="Get Stack, free" variant="solid" />
-            <PrimaryButton as={Link} to="/login" title="Log in" variant="ghost" />
+            <PrimaryButton as={Link} to="/signup" title={t('marketing.landing.getStackFree')} variant="solid" />
+            <PrimaryButton as={Link} to="/login" title={t('marketing.landing.login')} variant="ghost" />
           </div>
-          <p className={styles.heroNote}>
-            Completely free, on the web and on mobile — installs in seconds, under 600KB.
-          </p>
+          <p className={styles.heroNote}>{t('marketing.landing.heroNote')}</p>
         </motion.div>
       </section>
 
@@ -86,8 +59,8 @@ export default function Landing() {
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 0.4 }}
         >
-          <p className="text-tiny text-accent">Why Stack</p>
-          <h2 className={styles.featuresTitle}>Everything you need, nothing you don't</h2>
+          <p className="text-tiny text-accent">{t('marketing.landing.whyEyebrow')}</p>
+          <h2 className={styles.featuresTitle}>{t('marketing.landing.whyTitle')}</h2>
         </motion.div>
 
         <div className={styles.grid}>
@@ -119,11 +92,9 @@ export default function Landing() {
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.4 }}
         >
-          <h2 className={styles.closingTitle}>Ready to get it out of your head?</h2>
-          <p className={styles.closingBody}>
-            Grab the free app for your phone, or use Stack in any browser — free either way.
-          </p>
-          <PrimaryButton as={Link} to="/signup" title="Get Stack, free" variant="solid" />
+          <h2 className={styles.closingTitle}>{t('marketing.landing.closingTitle')}</h2>
+          <p className={styles.closingBody}>{t('marketing.landing.closingBody')}</p>
+          <PrimaryButton as={Link} to="/signup" title={t('marketing.landing.closingCta')} variant="solid" />
         </motion.div>
       </section>
 

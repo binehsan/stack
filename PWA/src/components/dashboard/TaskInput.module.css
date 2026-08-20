@@ -69,7 +69,7 @@
 
 @media (max-width: 375px) {
   .container {
-    padding-left: var(--space-xs);
+    padding-inline-start: var(--space-xs);
   }
 
   .input {

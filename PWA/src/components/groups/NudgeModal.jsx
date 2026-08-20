@@ -2,17 +2,19 @@ import { X } from 'lucide-react';
 
 import Avatar from './Avatar';
 import BottomSheet from '../BottomSheet';
+import { useLanguage } from '../../context/LanguageContext';
 import styles from './NudgeModal.module.css';
 
 // Delegate a group task to another member — or clear the assignment back
 // to "unassigned". Web counterpart of frontend/src/components/NudgeModal.js.
 export default function NudgeModal({ task, members, onSelect, onClose }) {
+  const { t } = useLanguage();
   return (
-    <BottomSheet open={Boolean(task)} onClose={onClose} label="Nudge someone">
+    <BottomSheet open={Boolean(task)} onClose={onClose} label={t('groups.nudgeModal.title')}>
       {task && (
         <>
-          <h3 className={`text-title ${styles.title}`}>Nudge someone</h3>
-          <p className={`text-small ${styles.subtitle}`}>"{task.text}"</p>
+          <h3 className={`text-title ${styles.title}`}>{t('groups.nudgeModal.title')}</h3>
+          <p className={`text-small ${styles.subtitle}`}>&ldquo;{task.text}&rdquo;</p>
 
           <div className={styles.memberList}>
             {task.assigned_to && (
@@ -20,7 +22,7 @@ export default function NudgeModal({ task, members, onSelect, onClose }) {
                 <span className={styles.clearIcon}>
                   <X size={16} strokeWidth={2.5} />
                 </span>
-                <span className="text-body">Clear assignment</span>
+                <span className="text-body">{t('groups.nudgeModal.clearAssignment')}</span>
               </button>
             )}
 
@@ -37,12 +39,12 @@ export default function NudgeModal({ task, members, onSelect, onClose }) {
             ))}
 
             {members.length === 0 && !task.assigned_to && (
-              <p className={`text-small ${styles.empty}`}>No other members to nudge yet.</p>
+              <p className={`text-small ${styles.empty}`}>{t('groups.nudgeModal.noMembers')}</p>
             )}
           </div>
 
           <button type="button" className={styles.cancelButton} onClick={onClose}>
-            Cancel
+            {t('groups.nudgeModal.cancel')}
           </button>
         </>
       )}

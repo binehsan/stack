@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Camera } from 'lucide-react';
 
 import { uploadAvatar } from '../../api/auth';
+import { useLanguage } from '../../context/LanguageContext';
 import styles from './AvatarUpload.module.css';
 
 // Avatar preview + upload control. `profile` is the current profile object
@@ -12,6 +13,7 @@ import styles from './AvatarUpload.module.css';
 // source of truth in the parent instead of this component owning profile
 // state too).
 export default function AvatarUpload({ profile, email, onUploaded }) {
+  const { t } = useLanguage();
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
@@ -27,7 +29,7 @@ export default function AvatarUpload({ profile, email, onUploaded }) {
       await uploadAvatar(file);
       await onUploaded?.();
     } catch (err) {
-      setError(err.message || 'Failed to upload avatar.');
+      setError(err.message || t('settings.avatarUpload.failedUpload'));
     } finally {
       setUploading(false);
     }
@@ -47,7 +49,7 @@ export default function AvatarUpload({ profile, email, onUploaded }) {
           type="button"
           className={styles.editBadge}
           onClick={() => inputRef.current?.click()}
-          aria-label="Change avatar"
+          aria-label={t('settings.avatarUpload.changeAvatar')}
           disabled={uploading}
         >
           <Camera size={13} strokeWidth={2.5} />
@@ -63,9 +65,9 @@ export default function AvatarUpload({ profile, email, onUploaded }) {
       </div>
       <div className={styles.meta}>
         <span className="text-body-strong">
-          {profile?.username ? `@${profile.username}` : 'Your avatar'}
+          {profile?.username ? `@${profile.username}` : t('settings.avatarUpload.yourAvatar')}
         </span>
-        {uploading && <span className="text-small text-muted">Uploading…</span>}
+        {uploading && <span className="text-small text-muted">{t('settings.avatarUpload.uploading')}</span>}
         {error && <span className={styles.error}>{error}</span>}
       </div>
     </div>

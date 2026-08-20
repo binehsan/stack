@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, Reorder, useDragControls } from 'framer-motion';
 import { Check, GripVertical, Star, Trash2 } from 'lucide-react';
 
+import { useLanguage } from '../../context/LanguageContext';
 import styles from './TaskItem.module.css';
 
 // A single row in the stack. Web port of frontend/src/components/TaskItem.js:
@@ -24,6 +25,7 @@ import styles from './TaskItem.module.css';
 //   would fight with tapping the checkbox/star/delete buttons and with
 //   touch-scrolling the page.
 export default function TaskItem({ task, onToggle, onDelete, onToggleStar, starDisabled, draggable = false }) {
+  const { t } = useLanguage();
   const [bounce, setBounce] = useState(false);
   const [textWidth, setTextWidth] = useState(0);
   const textRef = useRef(null);
@@ -73,7 +75,7 @@ export default function TaskItem({ task, onToggle, onDelete, onToggleStar, starD
           <span
             className={styles.dragHandle}
             onPointerDown={(e) => dragControls.start(e)}
-            aria-label="Drag to reorder"
+            aria-label={t('dashboard.taskItem.dragToReorder')}
             role="button"
             tabIndex={-1}
           >
@@ -124,7 +126,7 @@ export default function TaskItem({ task, onToggle, onDelete, onToggleStar, starD
             type="button"
             className={styles.starButton}
             onClick={handleStar}
-            aria-label={task.starred ? 'Remove from focus' : 'Add to focus'}
+            aria-label={task.starred ? t('dashboard.taskItem.removeFromFocus') : t('dashboard.taskItem.addToFocus')}
             aria-pressed={task.starred}
           >
             <motion.span
@@ -146,7 +148,7 @@ export default function TaskItem({ task, onToggle, onDelete, onToggleStar, starD
           type="button"
           className={styles.deleteButton}
           onClick={handleDelete}
-          aria-label="Delete task"
+          aria-label={t('dashboard.taskItem.deleteTask')}
         >
           <Trash2 size={17} strokeWidth={2} />
         </button>

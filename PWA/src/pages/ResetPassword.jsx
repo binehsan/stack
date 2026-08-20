@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
+import { useLanguage } from '../context/LanguageContext';
 import { confirmPasswordReset } from '../api/auth';
 import GradientBackground from '../components/GradientBackground';
 import Logo from '../components/Logo';
@@ -17,6 +18,7 @@ import styles from './Auth.module.css';
 // there's no logged-in session at this point, so this reads them straight
 // off the URL rather than from any auth context.
 export default function ResetPassword() {
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const uid = searchParams.get('uid');
@@ -32,11 +34,11 @@ export default function ResetPassword() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!newPassword || !newPasswordConfirm) {
-      setError('Fill in both password fields.');
+      setError(t('auth.resetPassword.errorFillBoth'));
       return;
     }
     if (newPassword !== newPasswordConfirm) {
-      setError("Passwords don't match.");
+      setError(t('auth.resetPassword.errorMismatch'));
       return;
     }
     setError(null);
@@ -45,7 +47,7 @@ export default function ResetPassword() {
       await confirmPasswordReset(uid, token, newPassword, newPasswordConfirm);
       navigate('/login', { replace: true });
     } catch (err) {
-      setError(err.message || 'This reset link is invalid or has expired.');
+      setError(err.message || t('auth.resetPassword.errorInvalidLink'));
     } finally {
       setLoading(false);
     }
@@ -62,7 +64,7 @@ export default function ResetPassword() {
             className={styles.brandMark}
           >
             <Logo size={64} />
-            <h1 className={`text-header ${styles.wordmark}`}>Stack</h1>
+            <h1 className={`text-header ${styles.wordmark}`}>{t('auth.resetPassword.wordmark')}</h1>
           </motion.div>
 
           <motion.div
@@ -73,34 +75,34 @@ export default function ResetPassword() {
             <Card elevated className={styles.card}>
               {linkInvalid ? (
                 <>
-                  <h2 className={`text-title ${styles.title}`}>Invalid reset link</h2>
+                  <h2 className={`text-title ${styles.title}`}>{t('auth.resetPassword.invalidTitle')}</h2>
                   <p className={`text-small text-muted ${styles.subtitle}`}>
-                    This link is missing or malformed. Request a new one instead.
+                    {t('auth.resetPassword.invalidBody')}
                   </p>
-                  <PrimaryButton as={Link} to="/forgot-password" title="Request a new link" />
+                  <PrimaryButton as={Link} to="/forgot-password" title={t('auth.resetPassword.requestNewLink')} />
                 </>
               ) : (
                 <>
-                  <h2 className={`text-title ${styles.title}`}>Set a new password</h2>
+                  <h2 className={`text-title ${styles.title}`}>{t('auth.resetPassword.title')}</h2>
                   <ErrorBanner message={error} />
                   <form className={styles.form} onSubmit={handleSubmit} noValidate>
                     <AuthTextField
-                      label="New password"
+                      label={t('auth.resetPassword.newPasswordLabel')}
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="••••••••"
+                      placeholder={t('auth.resetPassword.passwordPlaceholder')}
                       autoComplete="new-password"
                     />
                     <AuthTextField
-                      label="Confirm new password"
+                      label={t('auth.resetPassword.confirmLabel')}
                       type="password"
                       value={newPasswordConfirm}
                       onChange={(e) => setNewPasswordConfirm(e.target.value)}
-                      placeholder="••••••••"
+                      placeholder={t('auth.resetPassword.passwordPlaceholder')}
                       autoComplete="new-password"
                     />
-                    <PrimaryButton type="submit" title="Reset password" loading={loading} />
+                    <PrimaryButton type="submit" title={t('auth.resetPassword.submit')} loading={loading} />
                   </form>
                 </>
               )}

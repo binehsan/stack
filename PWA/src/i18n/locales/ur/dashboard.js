@@ -1,0 +1,57 @@
+export default {
+  page: {
+    title: 'میری فہرست',
+    pendingBadge: '{{count}} زیرِ التوا',
+    pendingBadgeTitle: 'دوبارہ آن لائن ہوتے ہی تبدیلیاں مکمل طور پر ہم آہنگ ہو جائیں گی۔',
+    refreshTasks: 'کام تازہ کریں',
+    retry: 'دوبارہ کوشش کریں',
+    dismiss: 'بند کریں',
+    dismissError: 'خرابی کا پیغام بند کریں',
+    emptyTitle: 'ابھی کچھ نہیں ہے',
+    emptySubtitle: 'آج کی فہرست شروع کرنے کے لیے اوپر اپنا پہلا کام شامل کریں۔',
+    allDoneTitle: 'آج سب کچھ مکمل ہوگیا',
+    allDoneSubtitle: 'جو کچھ آپ نے شامل کیا وہ نیچے مکمل شدہ حصے میں موجود ہے۔',
+  },
+  taskInput: {
+    placeholder: 'آج آپ کے ذمے کیا ہے؟',
+    newTaskLabel: 'نیا کام',
+    addTaskLabel: 'کام شامل کریں',
+  },
+  taskItem: {
+    dragToReorder: 'ترتیب بدلنے کے لیے گھسیٹیں',
+    addToFocus: 'توجہ میں شامل کریں',
+    removeFromFocus: 'توجہ سے ہٹائیں',
+    deleteTask: 'کام حذف کریں',
+  },
+  taskList: {
+    emptyTitle: 'ابھی آپ کی فہرست خالی ہے',
+    emptySubtitle: 'آج کی فہرست شروع کرنے کے لیے اوپر ایک کام شامل کریں۔',
+  },
+  focusSection: {
+    label: 'آج کی توجہ',
+  },
+  dumpSection: {
+    label: 'مکمل شدہ',
+    count: '{{count}} مکمل',
+  },
+  recapModal: {
+    ariaLabel: 'گزشتہ روز کا خلاصہ',
+    heading: 'گزشتہ روز کا خلاصہ',
+    allDone: 'آپ نے پوری فہرست مکمل کر لی۔ زبردست کام۔',
+    mostDone: 'زبردست دن — زیادہ تر کام مکمل ہوگیا۔',
+    quietDay: 'ایک پرسکون دن تھا۔ آج ایک نئی شروعات ہے۔',
+    summary: 'دیکھیں کل کا دن کیسا رہا۔',
+    of: '{{total}} میں سے',
+    startToday: 'آج شروع کریں',
+  },
+  carryForwardModal: {
+    ariaLabel: 'کیا کوئی کام آگے لانا ہے؟',
+    heading: 'کیا کوئی کام آگے لانا ہے؟',
+    oneTask: 'کل کا 1 کام باقی رہ گیا تھا۔',
+    manyTasks: 'کل کے {{count}} کام باقی رہ گئے تھے۔',
+    subtitleTail: 'آج کی فہرست کے لیے جو چاہیں منتخب کریں — یہ بالکل اختیاری ہے۔',
+    notToday: 'آج نہیں',
+    startFresh: 'نئے سرے سے شروع کریں',
+    bringForward: 'آگے لائیں ({{count}})',
+  },
+};

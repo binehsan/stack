@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Mail } from 'lucide-react';
 
+import { useLanguage } from '../context/LanguageContext';
 import GradientBackground from '../components/GradientBackground';
 import Card from '../components/Card';
 import MarketingNav from '../components/marketing/MarketingNav';
@@ -9,27 +10,19 @@ import styles from './Contact.module.css';
 
 const SUPPORT_EMAIL = 'hello@stackapp.example';
 
-const FAQS = [
-  {
-    q: 'Is Stack free?',
-    a: 'Yes, completely — the mobile app and the website, no credit card required, no paid tier.',
-  },
-  {
-    q: 'What do I get on the website versus the app?',
-    a: 'The same Stack experience either way: your tasks, Group Stacks, and everything synced. Use whichever is convenient, or both at once.',
-  },
-  {
-    q: 'I found a bug. Where do I report it?',
-    a: 'Email us with what happened and what device or browser you were using, and we\'ll take a look.',
-  },
-];
-
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 },
 };
 
 export default function Contact() {
+  const { t } = useLanguage();
+  const faqs = [
+    { q: t('common.contact.faq1Q'), a: t('common.contact.faq1A') },
+    { q: t('common.contact.faq2Q'), a: t('common.contact.faq2A') },
+    { q: t('common.contact.faq3Q'), a: t('common.contact.faq3A') },
+  ];
+
   return (
     <GradientBackground>
       <MarketingNav />
@@ -42,12 +35,9 @@ export default function Contact() {
           variants={fadeUp}
           transition={{ duration: 0.5, ease: 'easeOut' }}
         >
-          <p className="text-tiny text-accent">Contact</p>
-          <h1 className={styles.heroTitle}>Get in touch</h1>
-          <p className={styles.heroBody}>
-            Questions, feedback, or something not working the way it should? We read every
-            message, drop us a line.
-          </p>
+          <p className="text-tiny text-accent">{t('common.contact.eyebrow')}</p>
+          <h1 className={styles.heroTitle}>{t('common.contact.title')}</h1>
+          <p className={styles.heroBody}>{t('common.contact.body')}</p>
         </motion.div>
       </section>
 
@@ -63,10 +53,10 @@ export default function Contact() {
               <Mail size={20} strokeWidth={2.25} />
             </div>
             <div className={styles.emailText}>
-              <p className={styles.emailLabel}>Email us</p>
-              <p className={styles.emailSubtitle}>We typically reply within a day or two.</p>
+              <p className={styles.emailLabel}>{t('common.contact.emailLabel')}</p>
+              <p className={styles.emailSubtitle}>{t('common.contact.emailSubtitle')}</p>
             </div>
-            <a href={`mailto:${SUPPORT_EMAIL}`} className={styles.emailLink}>
+            <a href={`mailto:${SUPPORT_EMAIL}`} className={styles.emailLink} dir="ltr">
               {SUPPORT_EMAIL}
             </a>
           </Card>
@@ -81,10 +71,10 @@ export default function Contact() {
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.4 }}
         >
-          A few common questions
+          {t('common.contact.faqTitle')}
         </motion.h2>
         <div className={styles.faqGrid}>
-          {FAQS.map(({ q, a }, i) => (
+          {faqs.map(({ q, a }, i) => (
             <motion.div
               key={q}
               initial={{ opacity: 0, y: 16 }}

@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { Bell, Check } from 'lucide-react';
 
 import { usePushSubscription } from '../push/usePushSubscription';
+import { useLanguage } from '../context/LanguageContext';
 import BottomSheet from './BottomSheet';
 import styles from './PermissionsPrompt.module.css';
 
 const PROMPTED_KEY = 'stack_permissions_prompted';
 
 function PermissionRow({ icon: Icon, label, description, status, onEnable }) {
+  const { t } = useLanguage();
   return (
     <div className={styles.row}>
       <span className={styles.rowIcon}>
@@ -18,12 +20,16 @@ function PermissionRow({ icon: Icon, label, description, status, onEnable }) {
         <p className={styles.rowDescription}>{description}</p>
       </div>
       {status === 'granted' ? (
-        <span className={styles.rowGranted} aria-label="Enabled">
+        <span className={styles.rowGranted} aria-label={t('common.permissionsPrompt.enabled')}>
           <Check size={16} strokeWidth={2.75} />
         </span>
       ) : (
         <button type="button" className={styles.rowButton} onClick={onEnable} disabled={status === 'requesting'}>
-          {status === 'requesting' ? 'Asking…' : status === 'denied' ? 'Try again' : 'Enable'}
+          {status === 'requesting'
+            ? t('common.permissionsPrompt.asking')
+            : status === 'denied'
+              ? t('common.permissionsPrompt.tryAgain')
+              : t('common.permissionsPrompt.enable')}
         </button>
       )}
     </div>
@@ -36,6 +42,7 @@ function PermissionRow({ icon: Icon, label, description, status, onEnable }) {
 // enough in real testing that asking for a permission for a feature that
 // visibly didn't work was worse than not asking at all.
 export default function PermissionsPrompt() {
+  const { t } = useLanguage();
   const [dismissed, setDismissed] = useState(true);
   const { supported: pushSupported, permission: pushPermission, subscribed, loading: pushLoading, subscribe } =
     usePushSubscription();
@@ -59,18 +66,15 @@ export default function PermissionsPrompt() {
         : 'idle';
 
   return (
-    <BottomSheet open={!dismissed} dismissible={false} label="Enable notifications">
-      <h3 className={`text-title ${styles.title}`}>Turn on notifications</h3>
-      <p className={`text-small ${styles.subtitle}`}>
-        Get notified about group invites and nudges. Stays reachable later from Settings if you
-        skip it here.
-      </p>
+    <BottomSheet open={!dismissed} dismissible={false} label={t('common.permissionsPrompt.sheetLabel')}>
+      <h3 className={`text-title ${styles.title}`}>{t('common.permissionsPrompt.title')}</h3>
+      <p className={`text-small ${styles.subtitle}`}>{t('common.permissionsPrompt.subtitle')}</p>
 
       <div className={styles.rows}>
         <PermissionRow
           icon={Bell}
-          label="Notifications"
-          description="For group invites and nudges"
+          label={t('common.permissionsPrompt.notificationsLabel')}
+          description={t('common.permissionsPrompt.notificationsDescription')}
           status={pushStatus}
           onEnable={subscribe}
         />
@@ -78,7 +82,7 @@ export default function PermissionsPrompt() {
 
       <div className={styles.actions}>
         <button type="button" className={styles.skipButton} onClick={dismiss}>
-          Done
+          {t('common.permissionsPrompt.done')}
         </button>
       </div>
     </BottomSheet>

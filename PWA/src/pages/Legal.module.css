@@ -44,7 +44,7 @@
 
 .body ul {
   margin: 0 0 var(--space-sm);
-  padding-left: 20px;
+  padding-inline-start: 20px;
   display: flex;
   flex-direction: column;
   gap: 6px;

@@ -8,30 +8,11 @@ import PrimaryButton from '../components/PrimaryButton';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import syntaxLogo from '../assets/syntax-logo.png';
+import { useLanguage } from '../context/LanguageContext';
 import styles from './About.module.css';
 
-const PILLARS = [
-  {
-    icon: Star,
-    title: 'Focus, not features',
-    body: 'Starring today\'s three priorities is the only "organization" Stack asks of you. Everything else is just a list.',
-  },
-  {
-    icon: Trash2,
-    title: 'Nothing to feel guilty about',
-    body: 'There\'s no backlog to fall behind on. Today\'s tasks are today\'s tasks, finish them, dump them, and start fresh tomorrow.',
-  },
-  {
-    icon: Users,
-    title: 'Built for more than one person',
-    body: 'Life isn\'t solo. Group Stacks let a household, roommates, or a friend group share one list without a group chat full of "did anyone get X?"',
-  },
-  {
-    icon: Sparkles,
-    title: 'Calm on purpose',
-    body: 'Soft gradients, generous spacing, and animations that feel satisfying instead of showy. It should feel more like a nice notes app than software.',
-  },
-];
+const PILLAR_ICONS = [Star, Trash2, Users, Sparkles];
+const PILLAR_KEYS = ['focus', 'guilt', 'group', 'calm'];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -39,6 +20,13 @@ const fadeUp = {
 };
 
 export default function About() {
+  const { t } = useLanguage();
+  const PILLARS = PILLAR_KEYS.map((key, i) => ({
+    icon: PILLAR_ICONS[i],
+    title: t(`marketing.about.pillars.${key}.title`),
+    body: t(`marketing.about.pillars.${key}.body`),
+  }));
+
   return (
     <GradientBackground>
       <MarketingNav />
@@ -51,13 +39,9 @@ export default function About() {
           variants={fadeUp}
           transition={{ duration: 0.5, ease: 'easeOut' }}
         >
-          <p className="text-tiny text-accent">About Stack</p>
-          <h1 className={styles.heroTitle}>A to-do list that doesn't ask much of you</h1>
-          <p className={styles.heroBody}>
-            Most task apps eventually become a second job: projects, tags, due dates, a backlog
-            you're quietly ashamed of. Stack skips all of it. Write down what you need to do
-            today, knock it out, and start clean tomorrow.
-          </p>
+          <p className="text-tiny text-accent">{t('marketing.about.eyebrow')}</p>
+          <h1 className={styles.heroTitle}>{t('marketing.about.heroTitle')}</h1>
+          <p className={styles.heroBody}>{t('marketing.about.heroBody')}</p>
         </motion.div>
       </section>
 
@@ -69,20 +53,9 @@ export default function About() {
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 0.45 }}
         >
-          <h2 className={styles.storyTitle}>Why we built it</h2>
-          <p className={styles.storyBody}>
-            We kept reaching for a to-do app and closing it thirty seconds later, overwhelmed by
-            fields we didn't need: due dates for things due today, categories for a list of six
-            items, a backlog stretching back weeks. So we built the list we actually wanted: type
-            a task, hit enter, see it. Star what matters most right now. Cross things off and
-            watch them land somewhere satisfying instead of just disappearing.
-          </p>
-          <p className={styles.storyBody}>
-            Then we noticed most of our own lists weren't really solo: "pick up the kids,"
-            "restock the fridge," "book the Airbnb" all involved someone else. So Stack grew a
-            second gear: Group Stacks, a shared list for the people you actually split tasks
-            with, without turning into a project management tool for your household.
-          </p>
+          <h2 className={styles.storyTitle}>{t('marketing.about.storyTitle')}</h2>
+          <p className={styles.storyBody}>{t('marketing.about.storyBody1')}</p>
+          <p className={styles.storyBody}>{t('marketing.about.storyBody2')}</p>
         </motion.div>
       </section>
 
@@ -116,16 +89,11 @@ export default function About() {
           transition={{ duration: 0.45 }}
         >
           <Card elevated className={styles.founderCard}>
-            <img src={syntaxLogo} alt="Syntax" className={styles.founderLogo} />
-            <p className="text-tiny text-accent">Who's behind this</p>
-            <h2 className={styles.founderName}>Muhammad Amen Ehsan</h2>
-            <p className={styles.founderRole}>Founder of Syntax</p>
-            <p className={styles.founderBody}>
-              Stack is a Syntax project. I built it because I wanted a to-do list I'd actually
-              open every day instead of abandon after a week, so I made the one I kept wishing
-              existed. Syntax is where I build small, focused tools like this one, and Stack is
-              the first to make it out the door.
-            </p>
+            <img src={syntaxLogo} alt={t('marketing.about.founderLogoAlt')} className={styles.founderLogo} />
+            <p className="text-tiny text-accent">{t('marketing.about.founderEyebrow')}</p>
+            <h2 className={styles.founderName}>{t('marketing.about.founderName')}</h2>
+            <p className={styles.founderRole}>{t('marketing.about.founderRole')}</p>
+            <p className={styles.founderBody}>{t('marketing.about.founderBody')}</p>
           </Card>
         </motion.div>
       </section>
@@ -138,9 +106,9 @@ export default function About() {
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.4 }}
         >
-          <h2 className={styles.closingTitle}>Try it for today's list</h2>
-          <p className={styles.closingBody}>Free to start. No credit card, no setup.</p>
-          <PrimaryButton as={Link} to="/signup" title="Get started free" variant="solid" />
+          <h2 className={styles.closingTitle}>{t('marketing.about.closingTitle')}</h2>
+          <p className={styles.closingBody}>{t('marketing.about.closingBody')}</p>
+          <PrimaryButton as={Link} to="/signup" title={t('marketing.about.closingCta')} variant="solid" />
         </motion.div>
       </section>
 

@@ -49,12 +49,16 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(title || 'Stack', {
       body,
       // `icon` is the larger, full-color image shown in the notification
-      // body — the actual app icon. `badge` is the small monochrome glyph
-      // some platforms (Android's status bar, in particular) render tinted
-      // to a single color instead — favicon.png is the closer fit there
-      // since it's the plainer, smaller mark rather than the full icon.
+      // body — the actual app icon. `badge` is the small glyph Android's
+      // status bar renders — the OS masks it on its own alpha channel and
+      // tints the result to a single color, so it has to be a transparent
+      // PNG with ONLY the glyph opaque. favicon.png used to be here, but
+      // it's a fully-opaque square (gradient background baked in), so
+      // Android's mask saw one solid opaque rectangle and rendered a plain
+      // white square instead of the logo. badge-mono.png is the same mark
+      // cut out with a transparent background, built for this purpose.
       icon: '/icon-192.png',
-      badge: '/favicon.png',
+      badge: '/badge-mono.png',
       // Without an explicit pattern, whether Android vibrates at all is
       // just whatever that device/Chrome version defaults to — inconsistent
       // enough to read as "sometimes it doesn't." A real pattern here is
