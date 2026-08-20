@@ -7,7 +7,7 @@ import MarketingFooter from '../components/marketing/MarketingFooter';
 import styles from './Legal.module.css';
 
 const LAST_UPDATED = 'August 18, 2026';
-const CONTACT_EMAIL = 'amenbinehsan@gmail.com';
+const CONTACT_EMAIL = 'stack@hellosyntax.dev';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
