@@ -277,13 +277,13 @@ class NudgeGroupTaskView(APIView):
 
         send_expo_push(
             target.push_tokens.values_list('token', flat=True),
-            title=f'You have been nudged in {task.stack.name} 🗣️',
+            title=f'You have been nudged in {task.stack.name} groupStack 🗣️',
             body=task.text,
             data={'stackId': task.stack_id, 'taskId': task.id},
         )
         send_web_push(
             target.webpush_subscriptions.all(),
-            title=f'You have been nudged in {task.stack.name} 🗣️',
+            title=f'You have been nudged in {task.stack.name} groupStack🗣️',
             body=task.text,
             data={'stackId': task.stack_id, 'taskId': task.id},
         )
