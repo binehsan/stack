@@ -381,3 +381,50 @@ class StatsTests(APITestCase):
         self.assertEqual(response.data['total_created'], 2)
         self.assertEqual(response.data['total_completed'], 1)
         self.assertEqual(response.data['days_active'], 1)
+
+
+class StatsWithCustomResetHourTests(APITestCase):
+    """Regression coverage for stats() with a non-zero reset_hour, driven
+    through the real create/complete endpoints (not backdated rows) with a
+    mocked clock — the closest thing to how a user with a custom reset hour
+    would actually generate this data day over day. Guards against the
+    day-boundary math in stats() (which re-derives each row's logical day
+    from created_at) ever drifting out of sync with get_today_range()'s
+    boundary (which the daily-reset queryset uses)."""
+
+    @patch('django.utils.timezone.now')
+    def test_streak_and_days_active_stay_correct_across_real_days(self, mock_now):
+        user = make_user('customreset@example.com', reset_hour=4)
+        self.client.force_authenticate(user=user)
+
+        def complete_task_at(dt, text):
+            mock_now.return_value = timezone.make_aware(dt)
+            task_id = self.client.post('/api/tasks/', {'text': text}).data['id']
+            self.client.patch(f'/api/tasks/{task_id}/', {'completed': True}, format='json')
+
+        # Three consecutive logical days (reset_hour=4), each task added well
+        # after that day's 4am rollover.
+        complete_task_at(timezone.datetime(2026, 6, 10, 9, 0), 'Day1')
+        # 2026-06-11 02:00 is BEFORE the 4am boundary, so it's still the same
+        # logical day as the task above (06-10) — not a second day.
+        mock_now.return_value = timezone.make_aware(timezone.datetime(2026, 6, 11, 2, 0))
+        same_day_listing = self.client.get('/api/tasks/')
+        self.assertEqual(len(same_day_listing.data), 1)
+
+        complete_task_at(timezone.datetime(2026, 6, 11, 9, 0), 'Day2')
+        complete_task_at(timezone.datetime(2026, 6, 12, 9, 0), 'Day3')
+
+        mock_now.return_value = timezone.make_aware(timezone.datetime(2026, 6, 12, 9, 30))
+        response = self.client.get('/api/tasks/stats/')
+        self.assertEqual(response.data['current_streak'], 3)
+        self.assertEqual(response.data['longest_streak'], 3)
+        self.assertEqual(response.data['days_active'], 3)
+
+        # A day is skipped entirely, then a task lands on a later day — the
+        # streak should restart at 1 without disturbing the longest_streak.
+        complete_task_at(timezone.datetime(2026, 6, 14, 9, 0), 'Day5')
+        mock_now.return_value = timezone.make_aware(timezone.datetime(2026, 6, 14, 9, 30))
+        response = self.client.get('/api/tasks/stats/')
+        self.assertEqual(response.data['current_streak'], 1)
+        self.assertEqual(response.data['longest_streak'], 3)
+        self.assertEqual(response.data['days_active'], 4)

@@ -141,10 +141,37 @@ export default function Settings() {
   const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
-    fetchStats()
-      .then(setStats)
-      .catch((err) => console.warn('Failed to load stats:', err.message))
-      .finally(() => setStatsLoading(false));
+    let cancelled = false;
+
+    function loadStats({ showSpinner } = {}) {
+      if (showSpinner) setStatsLoading(true);
+      fetchStats()
+        .then((data) => {
+          if (!cancelled) setStats(data);
+        })
+        .catch((err) => console.warn('Failed to load stats:', err.message))
+        .finally(() => {
+          if (!cancelled) setStatsLoading(false);
+        });
+    }
+
+    loadStats({ showSpinner: true });
+
+    // Same reasoning as Dashboard's visibilitychange listener: unlike a
+    // route change (which fully remounts this page and refetches), this
+    // effect otherwise only ever runs once. A completed task on another
+    // device, or this PWA simply resuming after being backgrounded/
+    // suspended, doesn't trigger a remount — without this, the numbers here
+    // silently go stale until the user happens to navigate away and back.
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') loadStats();
+    }
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   // Push notifications
