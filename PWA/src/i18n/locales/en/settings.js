@@ -33,6 +33,13 @@ export default {
     tasksCrushed: 'Tasks Crushed',
     stackSessions: 'Stack Sessions',
     bestDayEver: 'Best Day Ever',
+    sharingLabel: 'Share stats with groupmates',
+    sharingDescription: "When on, members of your Group Stacks can see your streaks and totals on your profile.",
+    sharingOn: 'Shared',
+    sharingOff: 'Private',
+    sharingTurnOn: 'Turn on',
+    sharingTurnOff: 'Turn off',
+    sharingError: 'Failed to update sharing preference.',
   },
 
   notifications: {

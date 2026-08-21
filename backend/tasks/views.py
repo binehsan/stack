@@ -40,6 +40,72 @@ def get_previous_day_range(user):
     return start - timedelta(days=1), start
 
 
+def compute_stats(user):
+    """All-time profile stats for `user`. Tasks from past days are never
+    deleted — the daily reset is just a query filter (see get_queryset) — so
+    this reads real history, not a separately-tracked counter.
+
+    Day grouping is done in Python (not a DB date truncation) because it has
+    to respect the user's custom reset hour, not calendar midnight.
+
+    Factored out of TaskViewSet.stats so family/views.py's
+    GroupMemberProfileView can compute the same stats for another user
+    (subject to that user's share_stats_with_groups opt-in) without
+    duplicating the day-grouping/streak logic.
+    """
+    reset_hour = _reset_hour_for(user)
+    rows = Task.objects.filter(user=user).values_list('created_at', 'completed')
+
+    total_created = 0
+    total_completed = 0
+    active_dates = set()
+    completed_dates = set()
+    day_completed_counts = {}
+
+    for created_at, completed in rows:
+        total_created += 1
+        logical_date = timezone.localtime(created_at - timedelta(hours=reset_hour)).date()
+        active_dates.add(logical_date)
+        if completed:
+            total_completed += 1
+            completed_dates.add(logical_date)
+            day_completed_counts[logical_date] = day_completed_counts.get(logical_date, 0) + 1
+
+    today_start, _end = get_today_range(user)
+    today_logical = today_start.date()
+
+    current_streak = 0
+    cursor = today_logical if today_logical in completed_dates else today_logical - timedelta(days=1)
+    while cursor in completed_dates:
+        current_streak += 1
+        cursor -= timedelta(days=1)
+
+    longest_streak = 0
+    run = 0
+    previous_date = None
+    for d in sorted(completed_dates):
+        run = run + 1 if previous_date and (d - previous_date).days == 1 else 1
+        longest_streak = max(longest_streak, run)
+        previous_date = d
+
+    best_day = None
+    if day_completed_counts:
+        best_date, best_count = max(
+            day_completed_counts.items(), key=lambda kv: (kv[1], kv[0])
+        )
+        best_day = {'date': best_date.isoformat(), 'completed': best_count}
+
+    return {
+        'total_created': total_created,
+        'total_completed': total_completed,
+        'days_active': len(active_dates),
+        'current_streak': current_streak,
+        'longest_streak': longest_streak,
+        'best_day': best_day,
+        'member_since': user.date_joined.date().isoformat(),
+    }
+
+
 class TaskViewSet(viewsets.ModelViewSet):
     """CRUD for tasks, scoped to the authenticated user + "today" (the
     daily-reset requirement), plus a few small actions for the opt-in
@@ -178,55 +244,4 @@ class TaskViewSet(viewsets.ModelViewSet):
         Day grouping is done in Python (not a DB date truncation) because it
         has to respect the user's custom reset hour, not calendar midnight.
         """
-        user = request.user
-        reset_hour = _reset_hour_for(user)
-        rows = Task.objects.filter(user=user).values_list('created_at', 'completed')
-
-        total_created = 0
-        total_completed = 0
-        active_dates = set()
-        completed_dates = set()
-        day_completed_counts = {}
-
-        for created_at, completed in rows:
-            total_created += 1
-            logical_date = timezone.localtime(created_at - timedelta(hours=reset_hour)).date()
-            active_dates.add(logical_date)
-            if completed:
-                total_completed += 1
-                completed_dates.add(logical_date)
-                day_completed_counts[logical_date] = day_completed_counts.get(logical_date, 0) + 1
-
-        today_start, _end = get_today_range(user)
-        today_logical = today_start.date()
-
-        current_streak = 0
-        cursor = today_logical if today_logical in completed_dates else today_logical - timedelta(days=1)
-        while cursor in completed_dates:
-            current_streak += 1
-            cursor -= timedelta(days=1)
-
-        longest_streak = 0
-        run = 0
-        previous_date = None
-        for d in sorted(completed_dates):
-            run = run + 1 if previous_date and (d - previous_date).days == 1 else 1
-            longest_streak = max(longest_streak, run)
-            previous_date = d
-
-        best_day = None
-        if day_completed_counts:
-            best_date, best_count = max(
-                day_completed_counts.items(), key=lambda kv: (kv[1], kv[0])
-            )
-            best_day = {'date': best_date.isoformat(), 'completed': best_count}
-
-        return Response({
-            'total_created': total_created,
-            'total_completed': total_completed,
-            'days_active': len(active_dates),
-            'current_streak': current_streak,
-            'longest_streak': longest_streak,
-            'best_day': best_day,
-            'member_since': user.date_joined.date().isoformat(),
-        })
+        return Response(compute_stats(request.user))

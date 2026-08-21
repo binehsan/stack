@@ -33,6 +33,13 @@ export default {
     tasksCrushed: 'مکمل شدہ کام',
     stackSessions: 'Stack استعمال کے دن',
     bestDayEver: 'اب تک کا بہترین دن',
+    sharingLabel: 'گروپ ممبران کے ساتھ اعداد و شمار شیئر کریں',
+    sharingDescription: 'آن ہونے پر، آپ کے گروپ اسٹیکس کے ممبران آپ کی پروفائل پر آپ کے سلسلے اور مجموعی تعداد دیکھ سکیں گے۔',
+    sharingOn: 'شیئر ہو رہا ہے',
+    sharingOff: 'نجی',
+    sharingTurnOn: 'آن کریں',
+    sharingTurnOff: 'بند کریں',
+    sharingError: 'شیئرنگ ترجیح اپڈیٹ نہیں ہو سکی۔',
   },
 
   notifications: {

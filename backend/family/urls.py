@@ -3,6 +3,7 @@ from django.urls import path
 from .views import (
     CreateGroupStackView,
     GroupInviteListView,
+    GroupMemberProfileView,
     GroupStackDetailView,
     GroupTaskDetailView,
     GroupTaskListView,
@@ -24,4 +25,5 @@ urlpatterns = [
     path('<int:stack_id>/tasks/', GroupTaskListView.as_view()),
     path('<int:stack_id>/tasks/<int:task_id>/', GroupTaskDetailView.as_view()),
     path('<int:stack_id>/tasks/<int:task_id>/nudge/', NudgeGroupTaskView.as_view()),
+    path('<int:stack_id>/members/<int:user_id>/profile/', GroupMemberProfileView.as_view()),
 ]

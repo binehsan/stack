@@ -355,6 +355,61 @@ class GroupTaskTests(APITestCase):
         self.assertEqual(patched.status_code, status.HTTP_200_OK)
 
 
+class GroupMemberProfileTests(APITestCase):
+    def test_groupmate_sees_member_since_without_opting_in(self):
+        founder = make_user('profilefounder@example.com')
+        member = make_user('profilemember@example.com')
+        stack = GroupStack.objects.create(name='Profile Test', created_by=founder)
+        GroupMembership.objects.create(stack=stack, user=founder)
+        GroupMembership.objects.create(stack=stack, user=member)
+        self.client.force_authenticate(user=founder)
+
+        response = self.client.get(f'/api/groups/{stack.id}/members/{member.id}/profile/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], member.id)
+        self.assertEqual(response.data['username'], member.profile.username)
+        self.assertEqual(response.data['member_since'], member.date_joined.date().isoformat())
+        self.assertIsNone(response.data['stats'])
+
+    def test_groupmate_sees_stats_only_when_target_opted_in(self):
+        founder = make_user('statsfounder@example.com')
+        member = make_user('statsmember@example.com')
+        stack = GroupStack.objects.create(name='Stats Test', created_by=founder)
+        GroupMembership.objects.create(stack=stack, user=founder)
+        GroupMembership.objects.create(stack=stack, user=member)
+        member.profile.share_stats_with_groups = True
+        member.profile.save()
+        self.client.force_authenticate(user=founder)
+
+        response = self.client.get(f'/api/groups/{stack.id}/members/{member.id}/profile/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNotNone(response.data['stats'])
+        self.assertIn('current_streak', response.data['stats'])
+        self.assertIn('total_completed', response.data['stats'])
+
+    def test_non_groupmate_gets_404(self):
+        founder = make_user('privatefounder@example.com')
+        member = make_user('privatemember@example.com')
+        outsider = make_user('profileoutsider@example.com')
+        stack = GroupStack.objects.create(name='Private Profile', created_by=founder)
+        GroupMembership.objects.create(stack=stack, user=founder)
+        GroupMembership.objects.create(stack=stack, user=member)
+        self.client.force_authenticate(user=outsider)
+
+        response = self.client.get(f'/api/groups/{stack.id}/members/{member.id}/profile/')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_target_not_in_stack_gets_404(self):
+        founder = make_user('soloprofilefounder@example.com')
+        elsewhere = make_user('elsewheremember@example.com')
+        stack = GroupStack.objects.create(name='Solo Profile Stack', created_by=founder)
+        GroupMembership.objects.create(stack=stack, user=founder)
+        self.client.force_authenticate(user=founder)
+
+        response = self.client.get(f'/api/groups/{stack.id}/members/{elsewhere.id}/profile/')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
 class NudgeGroupTaskTests(APITestCase):
     def test_nudge_assigns_task_to_member(self):
         founder = make_user('nudgefounder@example.com')

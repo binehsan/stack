@@ -228,6 +228,7 @@ export default function GroupStackDetail() {
             <div className={styles.membersWrap}>
               <MemberList
                 members={stack?.members || []}
+                stackId={stackId}
                 inviteOpen={showInviteForm}
                 onToggleInvite={() => setShowInviteForm((prev) => !prev)}
               />

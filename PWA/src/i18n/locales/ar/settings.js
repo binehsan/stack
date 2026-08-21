@@ -33,6 +33,13 @@ export default {
     tasksCrushed: 'مهام أُنجزت',
     stackSessions: 'أيام استخدام Stack',
     bestDayEver: 'أفضل يوم على الإطلاق',
+    sharingLabel: 'مشاركة الإحصائيات مع أعضاء المجموعة',
+    sharingDescription: 'عند التفعيل، يمكن لأعضاء مجموعاتك المشتركة رؤية سلاسل إنجازك وإجمالياتك في ملفك الشخصي.',
+    sharingOn: 'مُشارَكة',
+    sharingOff: 'خاصة',
+    sharingTurnOn: 'تفعيل',
+    sharingTurnOff: 'إيقاف',
+    sharingError: 'تعذّر تحديث تفضيل المشاركة.',
   },
 
   notifications: {

@@ -30,6 +30,7 @@ const ShareTarget = lazy(() => import('./pages/ShareTarget'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const GroupStacks = lazy(() => import('./pages/GroupStacks'));
 const GroupStackDetail = lazy(() => import('./pages/GroupStackDetail'));
+const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -175,6 +176,7 @@ export default function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/stacks" element={<GroupStacks />} />
                 <Route path="/stacks/:stackId" element={<GroupStackDetail />} />
+                <Route path="/stacks/:stackId/members/:userId" element={<Profile />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>
             </Routes>

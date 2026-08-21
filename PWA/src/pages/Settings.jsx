@@ -174,6 +174,26 @@ export default function Settings() {
     };
   }, []);
 
+  // Share-stats-with-groups toggle — a profile field (like username), not
+  // its own endpoint, so it PATCHes through the same updateProfile call as
+  // everything else on this page.
+  const [sharingSaving, setSharingSaving] = useState(false);
+  const [sharingError, setSharingError] = useState(null);
+
+  async function handleToggleSharing() {
+    if (!profile) return;
+    setSharingError(null);
+    setSharingSaving(true);
+    try {
+      const updated = await updateProfile({ share_stats_with_groups: !profile.share_stats_with_groups });
+      setProfile(updated);
+    } catch (err) {
+      setSharingError(err.message || t('settings.stats.sharingError'));
+    } finally {
+      setSharingSaving(false);
+    }
+  }
+
   // Push notifications
   const { supported, permission, subscribed, loading: pushLoading, error: pushError, subscribe, unsubscribe } =
     usePushSubscription();
@@ -258,6 +278,29 @@ export default function Settings() {
             )}
           </div>
         ) : null}
+
+        {!profileLoading && profile && (
+          <div className={styles.modeRow}>
+            <div className={styles.modeInfo}>
+              <span className="text-small text-muted">{t('settings.stats.sharingLabel')}</span>
+              <span className="text-body-strong">
+                {profile.share_stats_with_groups ? t('settings.stats.sharingOn') : t('settings.stats.sharingOff')}
+              </span>
+              <span className="text-tiny text-muted">{t('settings.stats.sharingDescription')}</span>
+            </div>
+            <PrimaryButton
+              variant="ghost"
+              title={
+                profile.share_stats_with_groups
+                  ? t('settings.stats.sharingTurnOff')
+                  : t('settings.stats.sharingTurnOn')
+              }
+              onClick={handleToggleSharing}
+              loading={sharingSaving}
+            />
+          </div>
+        )}
+        <ErrorBanner message={sharingError} />
       </Card>
 
       <Card className={styles.section}>

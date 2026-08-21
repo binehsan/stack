@@ -54,6 +54,11 @@ class Profile(models.Model):
     # user — backs the DAU/WAU counts on the admin stats page
     # (accounts/admin.py's stats view), not shown to the user themselves.
     last_active_at = models.DateTimeField(null=True, blank=True)
+    # Opt-in (default False, privacy-safe) — when True, group-stack
+    # members the user shares a GroupStack with can see this user's stats
+    # (streak/tasks-completed/etc.) on their profile page. See
+    # family/views.py's GroupMemberProfileView.
+    share_stats_with_groups = models.BooleanField(default=False)
 
     def __str__(self):
         return f'@{self.username}'

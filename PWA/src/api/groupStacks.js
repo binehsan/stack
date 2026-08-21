@@ -75,3 +75,10 @@ export function nudgeGroupTask(stackId, taskId, username) {
     body: JSON.stringify({ username: username || '' }),
   });
 }
+
+// { id, username, avatar, member_since, stats: {...} | null } — `stats` is
+// only present if the target member opted in via Settings' "share stats
+// with groupmates" toggle (accounts.Profile.share_stats_with_groups).
+export function fetchGroupMemberProfile(stackId, userId) {
+  return request(`/groups/${stackId}/members/${userId}/profile/`);
+}

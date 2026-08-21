@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.webpush import send_web_push
+from tasks.views import compute_stats
 
 from .models import GROUP_MEMBER_ABUSE_CAP, GroupInvite, GroupMembership, GroupStack, GroupTask
 from .push import send_expo_push
@@ -13,6 +14,7 @@ from .serializers import (
     GroupStackSerializer,
     GroupStackUpdateSerializer,
     GroupTaskSerializer,
+    UserSummarySerializer,
 )
 
 
@@ -241,6 +243,39 @@ class GroupTaskDetailView(APIView):
             return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
         task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class GroupMemberProfileView(APIView):
+    """A group-stack member's profile: avatar/username/member-since, always,
+    plus their stats block if — and only if — they've opted in via
+    Profile.share_stats_with_groups. Both the caller and the target must
+    belong to the stack (checked via `_membership_for` for each), so a
+    viewer can only see profiles of people they actually share a Group
+    Stack with; a stack the caller isn't in, or a user who isn't in that
+    stack, both return the same "Not found" a non-member would get poking
+    at any other stack-scoped endpoint here, rather than a 403 that would
+    leak the stack's existence."""
+
+    def get(self, request, stack_id, user_id):
+        if not _membership_for(request.user, stack_id):
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        target_membership = GroupMembership.objects.filter(
+            user_id=user_id, stack_id=stack_id
+        ).select_related('user__profile').first()
+        if not target_membership:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        target_user = target_membership.user
+        profile = target_user.profile
+        data = {
+            'id': target_user.id,
+            'username': profile.username,
+            'avatar': UserSummarySerializer(target_user, context={'request': request}).data['avatar'],
+            'member_since': target_user.date_joined.date().isoformat(),
+            'stats': compute_stats(target_user) if profile.share_stats_with_groups else None,
+        }
+        return Response(data)
 
 
 class NudgeGroupTaskView(APIView):

@@ -93,7 +93,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['username', 'avatar', 'reset_hour', 'email']
+        fields = ['username', 'avatar', 'reset_hour', 'email', 'share_stats_with_groups']
         extra_kwargs = {'avatar': {'required': False, 'allow_null': True}}
 
     def validate_username(self, value):
