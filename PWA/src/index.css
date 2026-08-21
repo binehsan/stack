@@ -187,6 +187,25 @@ img {
 .text-muted { color: var(--color-text-muted); }
 .text-accent { color: var(--color-accent); }
 
+/* For Latin-only content (emails, @usernames) rendered inside RTL (ar/ur)
+   layouts: `direction: ltr` + `unicode-bidi: isolate` stops the Unicode
+   Bidi Algorithm from reordering neutral characters (@, ., _) against the
+   surrounding RTL paragraph — without this, "amen@test.com" can render
+   visually scrambled inside an RTL context. `font-family` is pinned to
+   the Arabic stack rather than left to inherit: Noto Nastaliq Urdu (the
+   'ur' locale's font, see --font-stack-ur above) ships its own bundled
+   Latin glyphs as a serif face designed to visually match its calligraphic
+   Urdu forms, so per-character font fallback picks Nastaliq's serif
+   Latin glyphs over the plain sans-serif system stack — reading as "why
+   is this in Times New Roman?". Baloo Bhaijaan 2/Cairo's Latin glyphs are
+   sans-serif and designed to match their own Arabic forms, which is what
+   should show instead, in both 'ar' and 'ur' locales. */
+.latin {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-family: var(--font-stack-ar);
+}
+
 @media (max-width: 640px) {
   .text-header { font-size: calc(26px * var(--type-scale)); }
 }

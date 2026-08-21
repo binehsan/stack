@@ -65,7 +65,7 @@ export default function Profile() {
           <ArrowLeft size={18} strokeWidth={2.25} />
         </Link>
         <h1 className={`text-title ${styles.title}`}>
-          {profile ? `@${profile.username}` : t('profile.fallbackHeading')}
+          {profile ? <span className="latin">@{profile.username}</span> : t('profile.fallbackHeading')}
         </h1>
       </div>
 
@@ -82,7 +82,7 @@ export default function Profile() {
         <>
           <Card className={styles.identityCard}>
             <Avatar uri={profile.avatar} label={profile.username} size={72} />
-            <p className={`text-title ${styles.handle}`}>@{profile.username}</p>
+            <p className={`text-title latin ${styles.handle}`}>@{profile.username}</p>
             <p className="text-small text-muted">
               {t('profile.memberSince', { date: formatDate(profile.member_since) })}
             </p>

@@ -65,7 +65,11 @@ export default function AvatarUpload({ profile, email, onUploaded }) {
       </div>
       <div className={styles.meta}>
         <span className="text-body-strong">
-          {profile?.username ? `@${profile.username}` : t('settings.avatarUpload.yourAvatar')}
+          {profile?.username ? (
+            <span className="latin">@{profile.username}</span>
+          ) : (
+            t('settings.avatarUpload.yourAvatar')
+          )}
         </span>
         {uploading && <span className="text-small text-muted">{t('settings.avatarUpload.uploading')}</span>}
         {error && <span className={styles.error}>{error}</span>}

@@ -21,7 +21,7 @@ export default function MemberList({ members, stackId, inviteOpen, onToggleInvit
           className={styles.chip}
         >
           <Avatar uri={member.avatar} label={member.username} size={24} />
-          <span className={`text-tiny ${styles.chipText}`}>@{member.username}</span>
+          <span className={`text-tiny latin ${styles.chipText}`}>@{member.username}</span>
         </Link>
       ))}
       <button

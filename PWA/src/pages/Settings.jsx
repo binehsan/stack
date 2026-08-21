@@ -236,7 +236,7 @@ export default function Settings() {
 
             <div className={styles.readonlyRow}>
               <span className="text-small text-muted">{t('settings.profile.emailLabel')}</span>
-              <span className="text-body">{email}</span>
+              <span className="text-body latin">{email}</span>
             </div>
           </>
         )}

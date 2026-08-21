@@ -14,7 +14,13 @@ export default function InviteCard({ stackId }) {
   const { t } = useLanguage();
   const [username, setUsername] = useState('');
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+  // The raw username, not the composed success sentence — the sentence
+  // mixes a translated (Urdu/Arabic) string with a Latin @handle, and that
+  // handle needs its own `.latin` span (see index.css) so it isn't
+  // reordered by the Unicode Bidi Algorithm inside an RTL sentence. Split
+  // around the untouched '{{username}}' placeholder (t() called with no
+  // vars leaves it literal) the same way Privacy.jsx isolates {{email}}.
+  const [invitedUsername, setInvitedUsername] = useState(null);
   const [sending, setSending] = useState(false);
 
   async function handleSubmit(e) {
@@ -25,11 +31,11 @@ export default function InviteCard({ stackId }) {
       return;
     }
     setError(null);
-    setSuccess(null);
+    setInvitedUsername(null);
     setSending(true);
     try {
       await sendGroupInvite(stackId, trimmed);
-      setSuccess(t('groups.inviteCard.invited', { username: trimmed.replace(/^@/, '').toLowerCase() }));
+      setInvitedUsername(trimmed.replace(/^@/, '').toLowerCase());
       setUsername('');
     } catch (err) {
       setError(err.message || t('groups.inviteCard.genericError'));
@@ -49,7 +55,20 @@ export default function InviteCard({ stackId }) {
     >
       <div className={styles.inner}>
         <ErrorBanner message={error} />
-        {success && <p className={`text-small ${styles.success}`}>{success}</p>}
+        {invitedUsername && (
+          <p className={`text-small ${styles.success}`}>
+            {(() => {
+              const [before, after] = t('groups.inviteCard.invited').split('{{username}}');
+              return (
+                <>
+                  {before}
+                  <span className="latin">{invitedUsername}</span>
+                  {after}
+                </>
+              );
+            })()}
+          </p>
+        )}
         <div className={styles.row}>
           <div className={styles.field}>
             <AuthTextField

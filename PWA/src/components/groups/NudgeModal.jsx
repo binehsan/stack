@@ -34,7 +34,7 @@ export default function NudgeModal({ task, members, onSelect, onClose }) {
                 onClick={() => onSelect(member.username)}
               >
                 <Avatar uri={member.avatar} label={member.username} size={32} />
-                <span className="text-body">@{member.username}</span>
+                <span className="text-body latin">@{member.username}</span>
               </button>
             ))}
 
