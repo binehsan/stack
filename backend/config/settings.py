@@ -295,12 +295,26 @@ _email_backend = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.cons
 # only need to be) when actually using the smtp backend.
 _mailer_options = {}
 if _email_backend == 'django.core.mail.backends.smtp.EmailBackend':
+    # Two mutually exclusive ways an SMTP provider offers TLS, and providers
+    # (Hostinger included) commonly default their docs/UI to port 465 —
+    # implicit SSL, the connection is encrypted from the first byte — which
+    # is a different wire protocol than port 587's STARTTLS (connect in
+    # plaintext, then upgrade). Django's smtplib backend needs to be told
+    # which one via `use_ssl` vs `use_tls`; passing the wrong one for the
+    # port doesn't cleanly error in every case, it can just silently fail
+    # the handshake. EMAIL_USE_SSL defaults false so nothing changes for
+    # anyone already correctly using 587+STARTTLS (EMAIL_USE_TLS=true).
+    use_ssl = os.environ.get('EMAIL_USE_SSL', 'false').lower() == 'true'
     _mailer_options = {
         'host': os.environ.get('EMAIL_HOST', ''),
         'port': int(os.environ.get('EMAIL_PORT', '587')),
         'username': os.environ.get('EMAIL_HOST_USER', ''),
         'password': os.environ.get('EMAIL_HOST_PASSWORD', ''),
-        'use_tls': os.environ.get('EMAIL_USE_TLS', 'true').lower() == 'true',
+        'use_ssl': use_ssl,
+        # Mutually exclusive with use_ssl — Django's SMTP backend raises at
+        # send time if both are true, so this only ever turns on when SSL
+        # isn't already handling the encryption.
+        'use_tls': False if use_ssl else os.environ.get('EMAIL_USE_TLS', 'true').lower() == 'true',
     }
 
 MAILERS = {
