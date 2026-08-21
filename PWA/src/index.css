@@ -37,6 +37,12 @@
   --font-stack-ar: 'Baloo Bhaijaan 2', 'Cairo', var(--font-stack);
   /* Nastaliq is genuinely free (Noto Nastaliq Urdu) — no substitute needed. */
   --font-stack-ur: 'Noto Nastaliq Urdu', var(--font-stack);
+  /* Multiplier applied to the px-based typography scale below (lines
+     ~160-165) via calc(). Stays 1 for every locale except 'ur' — see the
+     html[data-lang='ur'] body override, which compensates for Noto
+     Nastaliq Urdu rendering visually larger than the Latin/Arabic faces
+     at the same declared size. */
+  --type-scale: 1;
 
   color-scheme: light dark;
 }
@@ -55,6 +61,16 @@ html[data-lang='ur'] body {
      descenders from adjacent lines visibly collide. */
   font-family: var(--font-stack-ur);
   line-height: 2.1;
+  /* Noto Nastaliq Urdu also just draws bigger than the Latin/Arabic faces
+     at an identical declared font-size (its glyphs carry more built-in
+     side-bearing/overshoot) — scale the typography classes below down to
+     compensate so 'ur' body text reads at roughly the same visual size as
+     'en'/'ar'. This is a plain custom-property override, not a shorthand
+     `font-size` on body: the .text-* classes declare their own px
+     font-size (an absolute unit, so setting body's font-size wouldn't
+     cascade into them at all), so the scale has to be threaded through
+     via calc(px * var(--type-scale)) in each class instead. */
+  --type-scale: 0.88;
 }
 
 * {
@@ -156,17 +172,21 @@ img {
 }
 
 /* Typography scale — ported from frontend/src/theme.js's `typography`
-   object so headings/body text read at the same rhythm as the app. */
-.text-header { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; margin: 0; }
-.text-title { font-size: 19px; font-weight: 700; margin: 0; }
-.text-body { font-size: 16px; font-weight: 400; margin: 0; }
-.text-body-strong { font-size: 16px; font-weight: 600; margin: 0; }
-.text-small { font-size: 14px; font-weight: 500; margin: 0; }
-.text-tiny { font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin: 0; }
+   object so headings/body text read at the same rhythm as the app.
+   Sizes run through calc(px * var(--type-scale)) rather than a bare px
+   value so the 'ur' locale's --type-scale override (see
+   html[data-lang='ur'] body above) can shrink them; --type-scale defaults
+   to 1 for every other locale, leaving the px values unchanged. */
+.text-header { font-size: calc(32px * var(--type-scale)); font-weight: 700; letter-spacing: -0.5px; margin: 0; }
+.text-title { font-size: calc(19px * var(--type-scale)); font-weight: 700; margin: 0; }
+.text-body { font-size: calc(16px * var(--type-scale)); font-weight: 400; margin: 0; }
+.text-body-strong { font-size: calc(16px * var(--type-scale)); font-weight: 600; margin: 0; }
+.text-small { font-size: calc(14px * var(--type-scale)); font-weight: 500; margin: 0; }
+.text-tiny { font-size: calc(12px * var(--type-scale)); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin: 0; }
 
 .text-muted { color: var(--color-text-muted); }
 .text-accent { color: var(--color-accent); }
 
 @media (max-width: 640px) {
-  .text-header { font-size: 26px; }
+  .text-header { font-size: calc(26px * var(--type-scale)); }
 }
