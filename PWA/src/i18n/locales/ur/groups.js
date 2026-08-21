@@ -57,7 +57,7 @@ export default {
   },
   nudgeModal: {
     title: 'کسی کو یاد دلائیں',
-    clearAssignment: 'تفویض ہٹائیں',
+    clearNudge: 'یاد دہانی ہٹائیں',
     noMembers: 'یاد دلانے کے لیے ابھی کوئی اور ممبر نہیں۔',
     cancel: 'منسوخ کریں',
   },

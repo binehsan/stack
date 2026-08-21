@@ -57,7 +57,7 @@ export default {
   },
   nudgeModal: {
     title: 'نبّه أحدهم',
-    clearAssignment: 'إلغاء التعيين',
+    clearNudge: 'إلغاء التنبيه',
     noMembers: 'لا يوجد أعضاء آخرون لتنبيههم بعد.',
     cancel: 'إلغاء',
   },

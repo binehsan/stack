@@ -22,7 +22,7 @@ export default function NudgeModal({ task, members, onSelect, onClose }) {
                 <span className={styles.clearIcon}>
                   <X size={16} strokeWidth={2.5} />
                 </span>
-                <span className="text-body">{t('groups.nudgeModal.clearAssignment')}</span>
+                <span className="text-body">{t('groups.nudgeModal.clearNudge')}</span>
               </button>
             )}
 

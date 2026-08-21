@@ -38,7 +38,7 @@ export default function NudgeModal({ visible, task, members, onSelect, onClose }
                 <View style={styles.clearIcon}>
                   <X size={16} color={theme.textMuted} strokeWidth={2.5} />
                 </View>
-                <Text style={styles.memberName}>Clear assignment</Text>
+                <Text style={styles.memberName}>Clear nudge</Text>
               </TouchableOpacity>
             )}
 

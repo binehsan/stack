@@ -57,7 +57,7 @@ export default {
   },
   nudgeModal: {
     title: 'Nudge someone',
-    clearAssignment: 'Clear assignment',
+    clearNudge: 'Clear nudge',
     noMembers: 'No other members to nudge yet.',
     cancel: 'Cancel',
   },
