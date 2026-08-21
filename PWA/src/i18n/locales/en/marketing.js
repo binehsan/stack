@@ -27,7 +27,7 @@ export default {
       'A calm place for your to-dos, whether solo or with the people you share life with. No due dates, no projects, no guilt backlog. Just today.',
     getStackFree: 'Get Stack, free',
     login: 'Log in',
-    heroNote: 'Completely free, on the web and on mobile — installs in seconds, under 600KB.',
+    heroNote: 'Completely free, on the web and on mobile — installs in seconds, under 750KB.',
     whyEyebrow: 'Why Stack',
     whyTitle: "Everything you need, nothing you don't",
     features: {
@@ -162,11 +162,11 @@ export default {
     eyebrow: 'Install Stack',
     heroTitle: 'On your home screen in under a minute',
     heroBody:
-      "Stack is a Progressive Web App — it installs straight from your browser, no app store account, no waiting for approval, nothing to keep updated yourself. It looks, feels, and behaves like any other app on your phone once it's there.",
-    heroStat: 'Under 600KB total, and next to nothing on your data plan.',
+      "Stack is a Progressive Web App — it installs straight from your browser, no app store account needed. It looks, feels, and behaves like any other app on your phone once it's there.",
+    heroStat: 'Under 750KB total, and next to nothing on your data plan.',
     why: {
       noAppStore:
-        'No app store, no review wait — installs in seconds, and the whole thing is under 600KB, smaller than a single photo.',
+        'No app store needed — installs in seconds, and the whole thing is under 750KB, smaller than a single photo.',
       pushNotif: 'Real push notifications for invites and nudges, same as a native app.',
       voiceInput: 'Add tasks by voice, right from the keyboard.',
       offline: 'Opens instantly, works offline for anything already loaded.',
