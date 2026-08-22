@@ -79,8 +79,18 @@ class GroupInviteSerializer(serializers.ModelSerializer):
 class GroupTaskSerializer(serializers.ModelSerializer):
     created_by = UserSummarySerializer(read_only=True)
     assigned_to = UserSummarySerializer(read_only=True)
+    completed_by = UserSummarySerializer(read_only=True)
 
     class Meta:
         model = GroupTask
-        fields = ['id', 'text', 'completed', 'created_by', 'assigned_to', 'created_at']
-        read_only_fields = ['id', 'created_by', 'assigned_to', 'created_at']
+        fields = [
+            'id',
+            'text',
+            'completed',
+            'created_by',
+            'assigned_to',
+            'created_at',
+            'completed_by',
+            'completed_at',
+        ]
+        read_only_fields = ['id', 'created_by', 'assigned_to', 'created_at', 'completed_by', 'completed_at']

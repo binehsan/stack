@@ -3,11 +3,21 @@ from django.contrib.auth.models import User
 from django.shortcuts import render
 from django.urls import path
 from django.utils import timezone
+from django_otp.admin import OTPAdminSite
 
 from family.models import GroupStack
 from tasks.models import Task
 
 from .models import Profile, PushToken, WebPushSubscription
+
+# Requires every admin login (not just this stats page) to be verified by a
+# registered OTP device — a plain username/password no longer gets in. Swap
+# the class of the existing singleton rather than creating a second
+# AdminSite instance, so every admin.site.register() call across the project
+# (this file and any other app's admin.py) keeps working unchanged. Set up a
+# device first with `manage.py setup_2fa <email>` — see that command's
+# docstring, since a user with no confirmed device is otherwise locked out.
+admin.site.__class__ = OTPAdminSite
 
 admin.site.register(Profile)
 admin.site.register(PushToken)

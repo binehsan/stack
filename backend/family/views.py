@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
@@ -234,7 +235,23 @@ class GroupTaskDetailView(APIView):
             task, data=request.data, partial=True, context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
-        task = serializer.save()
+
+        # completed_by/completed_at aren't writable through the serializer
+        # (any group member can flip `completed` on anyone else's task) —
+        # derived here instead, only on an actual flip, so a PATCH that
+        # merely repeats the current value doesn't reset who gets credit.
+        # See GroupTask.completed_by's docstring for why this has to be
+        # tracked at all: it's what lets compute_stats credit the right
+        # person's personal streak for a group-task completion.
+        wants_completed = serializer.validated_data.get('completed')
+        if wants_completed is not None and wants_completed != task.completed:
+            if wants_completed:
+                task = serializer.save(completed_by=request.user, completed_at=timezone.now())
+            else:
+                task = serializer.save(completed_by=None, completed_at=None)
+        else:
+            task = serializer.save()
+
         return Response(GroupTaskSerializer(task, context={'request': request}).data)
 
     def delete(self, request, stack_id, task_id):

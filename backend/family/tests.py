@@ -354,6 +354,107 @@ class GroupTaskTests(APITestCase):
         )
         self.assertEqual(patched.status_code, status.HTTP_200_OK)
 
+    def test_completing_credits_the_completer_not_the_creator(self):
+        founder = make_user('creditfounder@example.com')
+        member = make_user('creditmember@example.com')
+        stack = GroupStack.objects.create(name='Credit Test', created_by=founder)
+        GroupMembership.objects.create(stack=stack, user=founder)
+        GroupMembership.objects.create(stack=stack, user=member)
+
+        self.client.force_authenticate(user=founder)
+        created = self.client.post(f'/api/groups/{stack.id}/tasks/', {'text': 'Do dishes'})
+        task_id = created.data['id']
+
+        self.client.force_authenticate(user=member)
+        patched = self.client.patch(
+            f'/api/groups/{stack.id}/tasks/{task_id}/', {'completed': True}, format='json'
+        )
+        self.assertEqual(patched.data['completed_by']['id'], member.id)
+        self.assertIsNotNone(patched.data['completed_at'])
+
+        task = GroupTask.objects.get(pk=task_id)
+        self.assertEqual(task.completed_by, member)
+        self.assertIsNotNone(task.completed_at)
+
+    def test_uncompleting_clears_completion_credit(self):
+        founder = make_user('clearfounder@example.com')
+        stack = GroupStack.objects.create(name='Clear Test', created_by=founder)
+        GroupMembership.objects.create(stack=stack, user=founder)
+        self.client.force_authenticate(user=founder)
+
+        created = self.client.post(f'/api/groups/{stack.id}/tasks/', {'text': 'Vacuum'})
+        task_id = created.data['id']
+        self.client.patch(f'/api/groups/{stack.id}/tasks/{task_id}/', {'completed': True}, format='json')
+
+        uncompleted = self.client.patch(
+            f'/api/groups/{stack.id}/tasks/{task_id}/', {'completed': False}, format='json'
+        )
+        self.assertIsNone(uncompleted.data['completed_by'])
+        self.assertIsNone(uncompleted.data['completed_at'])
+
+    def test_repeating_same_completed_value_does_not_reset_credit(self):
+        founder = make_user('repeatfounder@example.com')
+        stack = GroupStack.objects.create(name='Repeat Test', created_by=founder)
+        GroupMembership.objects.create(stack=stack, user=founder)
+        self.client.force_authenticate(user=founder)
+
+        created = self.client.post(f'/api/groups/{stack.id}/tasks/', {'text': 'Water plants'})
+        task_id = created.data['id']
+        first = self.client.patch(
+            f'/api/groups/{stack.id}/tasks/{task_id}/', {'completed': True}, format='json'
+        )
+        first_completed_at = first.data['completed_at']
+
+        # A PATCH that also touches `text` but leaves completed=True as-is
+        # shouldn't bump completed_at to a new timestamp.
+        second = self.client.patch(
+            f'/api/groups/{stack.id}/tasks/{task_id}/',
+            {'completed': True, 'text': 'Water plants again'},
+            format='json',
+        )
+        self.assertEqual(second.data['completed_at'], first_completed_at)
+
+
+class GroupTaskStreakCreditTests(APITestCase):
+    """compute_stats (tasks/views.py) is what backs the personal streak
+    shown in Settings/Profile — this covers the gap where a Group Stack
+    task someone completed never touched that number at all, since
+    GroupTask is a wholly separate model from the personal Task it used to
+    only look at."""
+
+    def test_completed_group_task_counts_toward_personal_streak(self):
+        from tasks.views import compute_stats
+
+        founder = make_user('streakcredit@example.com')
+        stack = GroupStack.objects.create(name='Streak Credit', created_by=founder)
+        GroupMembership.objects.create(stack=stack, user=founder)
+        self.client.force_authenticate(user=founder)
+
+        created = self.client.post(f'/api/groups/{stack.id}/tasks/', {'text': 'Walk the dog'})
+        task_id = created.data['id']
+        self.client.patch(f'/api/groups/{stack.id}/tasks/{task_id}/', {'completed': True}, format='json')
+
+        stats = compute_stats(founder)
+        self.assertEqual(stats['current_streak'], 1)
+        self.assertEqual(stats['total_completed'], 1)
+        # Creating a group task isn't credited as this user's own dump-list
+        # activity the way a personal Task is.
+        self.assertEqual(stats['total_created'], 0)
+
+    def test_uncompleted_group_task_does_not_count(self):
+        from tasks.views import compute_stats
+
+        founder = make_user('nostreakcredit@example.com')
+        stack = GroupStack.objects.create(name='No Streak Credit', created_by=founder)
+        GroupMembership.objects.create(stack=stack, user=founder)
+        self.client.force_authenticate(user=founder)
+
+        self.client.post(f'/api/groups/{stack.id}/tasks/', {'text': 'Take out recycling'})
+
+        stats = compute_stats(founder)
+        self.assertEqual(stats['current_streak'], 0)
+        self.assertEqual(stats['total_completed'], 0)
+
 
 class GroupMemberProfileTests(APITestCase):
     def test_groupmate_sees_member_since_without_opting_in(self):

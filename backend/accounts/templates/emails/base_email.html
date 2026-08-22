@@ -1,8 +1,10 @@
-{# Shared shell for every transactional email — email clients strip <style>
-   blocks unpredictably, so every rule here is inlined rather than in a
-   stylesheet. Colors are the website's "Classic" theme tokens (see
-   website/src/index.css) hardcoded, since an email has no CSS variables and
-   no access to whichever theme the recipient actually has picked. #}
+{% comment %}
+Shared shell for every transactional email — email clients strip <style>
+blocks unpredictably, so every rule here is inlined rather than in a
+stylesheet. Colors are the website's "Classic" theme tokens (see
+website/src/index.css) hardcoded, since an email has no CSS variables and
+no access to whichever theme the recipient actually has picked.
+{% endcomment %}
 <!DOCTYPE html>
 <html>
   <body style="margin:0; padding:0; background:#F5EFE6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">

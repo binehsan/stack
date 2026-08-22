@@ -41,22 +41,40 @@ export default function Profile() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setLoadError(null);
-    fetchGroupMemberProfile(stackId, userId)
-      .then((data) => {
-        if (!cancelled) setProfile(data);
-      })
-      .catch((err) => {
-        if (!cancelled) setLoadError(err.message || t('profile.loadError'));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+
+    function loadProfile({ showSpinner } = {}) {
+      if (showSpinner) {
+        setLoading(true);
+        setLoadError(null);
+      }
+      fetchGroupMemberProfile(stackId, userId)
+        .then((data) => {
+          if (!cancelled) setProfile(data);
+        })
+        .catch((err) => {
+          if (!cancelled) setLoadError(err.message || t('profile.loadError'));
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    }
+
+    loadProfile({ showSpinner: true });
+
+    // Same reasoning as Settings.jsx's stats effect: this page only remounts
+    // on a stackId/userId change, so a groupmate's streak completing on
+    // their end, or this PWA resuming from being backgrounded, would
+    // otherwise never refresh the tiles here until the next navigation.
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') loadProfile();
+    }
+    document.addEventListener('visibilitychange', handleVisibility);
+
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [stackId, userId]);
+  }, [stackId, userId, t]);
 
   return (
     <div className={styles.page}>

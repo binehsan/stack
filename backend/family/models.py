@@ -85,6 +85,24 @@ class GroupTask(models.Model):
         related_name='assigned_group_tasks',
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    # Who actually flipped `completed` to True, and when — unlike
+    # created_by/assigned_to, this isn't fixed at creation, so it's the only
+    # way to credit the right person's personal streak (see
+    # tasks/views.py's compute_stats) for group-task completions. Anyone in
+    # the stack can complete/uncomplete a shared task regardless of
+    # assigned_to, so this always reflects the most recent completer, not
+    # necessarily the assignee. Cleared (not preserved) on uncomplete —
+    # see family/views.py's GroupTaskDetailView.patch — matching how a
+    # personal Task's completion is likewise just current state, not a
+    # completion history.
+    completed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='completed_group_tasks',
+    )
+    completed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']

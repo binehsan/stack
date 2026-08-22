@@ -6,6 +6,8 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from family.models import GroupTask
+
 from .models import Task
 from .serializers import TaskSerializer
 
@@ -70,6 +72,23 @@ def compute_stats(user):
             total_completed += 1
             completed_dates.add(logical_date)
             day_completed_counts[logical_date] = day_completed_counts.get(logical_date, 0) + 1
+
+    # Group Stack tasks this user completed count toward their personal
+    # streak/activity too — anchored on completed_at (not created_at, which
+    # may be someone else's doing, and unlike a personal Task a GroupTask
+    # isn't scoped to "today" in the first place) so only the day the user
+    # actually finished it matters. Not folded into total_created: creating
+    # a group task isn't necessarily this user's own effort the way adding
+    # to their personal Stack is.
+    completed_group_timestamps = GroupTask.objects.filter(
+        completed_by=user, completed=True, completed_at__isnull=False
+    ).values_list('completed_at', flat=True)
+    for completed_at in completed_group_timestamps:
+        logical_date = timezone.localtime(completed_at - timedelta(hours=reset_hour)).date()
+        active_dates.add(logical_date)
+        completed_dates.add(logical_date)
+        total_completed += 1
+        day_completed_counts[logical_date] = day_completed_counts.get(logical_date, 0) + 1
 
     today_start, _end = get_today_range(user)
     today_logical = today_start.date()

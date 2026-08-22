@@ -101,6 +101,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
     'accounts',
     'tasks',
     'family',
@@ -113,6 +115,10 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # Must come after AuthenticationMiddleware (needs request.user) and
+    # before admin.py's OTPAdminSite checks it via user.is_verified() on
+    # every admin request.
+    'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'accounts.middleware.TrackLastActiveMiddleware',
