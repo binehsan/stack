@@ -10,12 +10,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Safe to run without a real .env present — every setting it touches
-# (SECRET_KEY, DEBUG, etc.) has a dev-safe fallback, and collectstatic
-# doesn't need the database. Real secrets are injected at *run* time via
-# docker-compose's env_file, never baked into the image.
-RUN python manage.py collectstatic --noinput
-
+# collectstatic runs in entrypoint.sh instead, at container start — doing
+# it here at build time is pointless, since docker-compose.yml's bind mount
+# of ./staticfiles over /app/staticfiles shadows it as soon as the
+# container starts.
 RUN chmod +x entrypoint.sh
 
 EXPOSE 8000
